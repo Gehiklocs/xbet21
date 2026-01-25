@@ -1201,19 +1201,19 @@
                         <div class="main-odds">
                             <div class="odds-item">
                                 <button class="odds-button" @click="openBetModal('1x', matchData.odds.double_chance_1x, '1X ({{ match.home_team.name }} Win or Draw)', 'double-chance', {{ odds.bookmaker.id }})">
-                                    <div class="odds-value" x-text="matchData.odds.double_chance_1x || '{{ odds.get_1x_odds|default:"-" }}'"></div>
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_1x || '{{ odds.get_1x_odds|default:'-' }}'"></div>
                                     <div class="odds-label">1X</div>
                                 </button>
                             </div>
                             <div class="odds-item">
                                 <button class="odds-button" @click="openBetModal('12', matchData.odds.double_chance_12, '12 ({{ match.home_team.name }} or {{ match.away_team.name }} Win)', 'double-chance', {{ odds.bookmaker.id }})">
-                                    <div class="odds-value" x-text="matchData.odds.double_chance_12 || '{{ odds.get_12_odds|default:"-" }}'"></div>
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_12 || '{{ odds.get_12_odds|default:'-' }}'"></div>
                                     <div class="odds-label">12</div>
                                 </button>
                             </div>
                             <div class="odds-item">
                                 <button class="odds-button" @click="openBetModal('x2', matchData.odds.double_chance_x2, 'X2 (Draw or {{ match.away_team.name }} Win)', 'double-chance', {{ odds.bookmaker.id }})">
-                                    <div class="odds-value" x-text="matchData.odds.double_chance_x2 || '{{ odds.get_x2_odds|default:"-" }}'"></div>
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_x2 || '{{ odds.get_x2_odds|default:'-' }}'"></div>
                                     <div class="odds-label">X2</div>
                                 </button>
                             </div>
@@ -1232,7 +1232,6 @@
     </div>
 
     <!-- Bet Modal -->
-   <!-- Bet Modal -->
 <div x-show="showBetModal" x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-200"
@@ -1342,6 +1341,7 @@
             </button>
         </div>
     </div>
+</div>
 </div>
 
 <script>
