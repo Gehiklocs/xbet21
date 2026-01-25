@@ -7,15 +7,16 @@
         padding: 2rem;
     }
 
+    /* --- Enhanced Match Header --- */
     .match-header {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
         backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 24px;
         padding: 3rem 2rem;
         margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         position: relative;
         overflow: hidden;
     }
@@ -26,8 +27,8 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
     }
 
     .teams-display {
@@ -47,26 +48,28 @@
         transition: transform 0.3s ease;
     }
 
-    .team:hover {
-        transform: scale(1.05);
-    }
-
     .team-logo-large {
-        width: 140px;
-        height: 140px;
-        border-radius: 24px;
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
         object-fit: contain;
         padding: 15px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .team:hover .team-logo-large {
+        transform: scale(1.05);
+        border-color: rgba(255, 255, 255, 0.1);
     }
 
     .no-logo-large {
-        width: 140px;
-        height: 140px;
-        border-radius: 24px;
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
         background: linear-gradient(135deg, var(--primary), var(--secondary));
         display: flex;
         align-items: center;
@@ -74,118 +77,115 @@
         color: white;
         font-weight: 800;
         font-size: 32px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
     }
 
     .team-name {
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 1.5rem;
+        font-weight: 700;
         color: white;
         text-align: center;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         letter-spacing: -0.5px;
+        max-width: 200px;
+        line-height: 1.2;
     }
 
+    /* --- Scoreboard --- */
     .vs-container {
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin: 0 3rem;
+        margin: 0 2rem;
+        min-width: 180px;
     }
 
-    .vs {
-        font-size: 3rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1.5rem;
-        opacity: 0.5;
+    .score-board {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: white;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .score-digit {
+        transition: color 0.3s ease;
+    }
+
+    .score-digit.changed {
+        color: var(--secondary);
+        animation: scorePulse 1s ease;
+    }
+
+    @keyframes scorePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); color: #fff; }
+        100% { transform: scale(1); }
     }
 
     .match-info-badge {
-        background: rgba(99, 102, 241, 0.1);
-        padding: 0.8rem 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.6rem 1.5rem;
         border-radius: 50px;
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.3rem;
+        backdrop-filter: blur(5px);
     }
 
     .match-time {
-        font-size: 1.1rem;
-        color: var(--secondary);
-        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        font-weight: 600;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .match-league {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
+    .live-indicator {
+        color: #ef4444;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        animation: pulse 2s infinite;
     }
 
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+
+    .match-league {
+        font-size: 0.8rem;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+    }
+
+    /* --- Odds Section --- */
     .odds-section {
-        margin-top: 3rem;
+        margin-top: 2rem;
     }
 
     .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .section-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .odds-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2rem;
-    }
-
-    .bookmaker-card {
-        background: rgba(30, 41, 59, 0.6);
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .bookmaker-card:hover {
-        transform: translateY(-5px);
-        border-color: var(--primary);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        background: rgba(30, 41, 59, 0.8);
-    }
-
-    .bookmaker-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .bookmaker-name {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: white;
         display: flex;
@@ -193,27 +193,42 @@
         gap: 0.8rem;
     }
 
+    /* --- Enhanced Tabs --- */
     .odds-types {
         display: flex;
         gap: 0.5rem;
         background: rgba(15, 23, 42, 0.6);
         padding: 0.4rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
         overflow-x: auto;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        scrollbar-width: none; /* Hide scrollbar */
+    }
+
+    .odds-types::-webkit-scrollbar {
+        display: none;
     }
 
     .odds-type-button {
         flex: 1;
         background: transparent;
         border: none;
-        padding: 0.6rem;
-        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        border-radius: 12px;
         color: var(--text-muted);
         font-weight: 600;
+        font-size: 0.9rem;
         cursor: pointer;
         transition: all 0.3s ease;
         white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .odds-type-button:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.05);
     }
 
     .odds-type-button.active {
@@ -222,106 +237,119 @@
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
 
+    /* --- Odds Cards --- */
+    .odds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .bookmaker-card {
+        background: rgba(30, 41, 59, 0.4);
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
     .main-odds {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+        gap: 0.8rem;
     }
 
     .odds-item {
-        background: rgba(15, 23, 42, 0.6);
-        border-radius: 16px;
-        padding: 1.5rem 1rem;
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 14px;
+        padding: 1.2rem 0.8rem;
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         cursor: pointer;
         position: relative;
+        overflow: hidden;
     }
 
     .odds-item:hover {
-        border-color: var(--secondary);
-        background: rgba(6, 214, 160, 0.05);
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
         transform: translateY(-2px);
     }
 
-    .odds-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: var(--secondary);
-        margin-bottom: 0.4rem;
-        font-family: 'Courier New', monospace;
+    .odds-item:active {
+        transform: scale(0.98);
     }
+
+    .odds-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.3rem;
+        font-family: 'Segoe UI', sans-serif;
+        transition: color 0.3s;
+    }
+
+    /* Odds Movement Animations */
+    .odds-up .odds-value { color: #06d6a0; animation: flashGreen 1s; }
+    .odds-down .odds-value { color: #ef4444; animation: flashRed 1s; }
+
+    @keyframes flashGreen { 0% { background: rgba(6,214,160,0.2); } 100% { background: transparent; } }
+    @keyframes flashRed { 0% { background: rgba(239,68,68,0.2); } 100% { background: transparent; } }
 
     .odds-label {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         font-weight: 600;
     }
 
-    .additional-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        background: rgba(15, 23, 42, 0.3);
-        padding: 1rem;
-        border-radius: 16px;
-    }
-
-    .stat-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.9rem;
-    }
-
-    .stat-label {
-        color: var(--text-muted);
-    }
-
-    .stat-value {
-        color: white;
-        font-weight: 600;
-    }
-
+    /* --- Back Button --- */
     .back-button {
         display: inline-flex;
         align-items: center;
-        gap: 0.8rem;
-        background: rgba(255, 255, 255, 0.05);
+        gap: 0.6rem;
+        background: transparent;
         color: var(--text-muted);
-        padding: 0.8rem 1.5rem;
-        border-radius: 12px;
-        text-decoration: none;
+        padding: 0.6rem 0;
+        border: none;
         font-weight: 600;
-        transition: all 0.3s ease;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
         cursor: pointer;
+        transition: color 0.2s;
+        margin-bottom: 1.5rem;
     }
 
     .back-button:hover {
-        background: rgba(255, 255, 255, 0.1);
         color: white;
-        transform: translateX(-5px);
     }
 
-    /* Betting Modal Styles */
+    /* --- Mobile Responsive --- */
+    @media (max-width: 768px) {
+        .match-detail-container { padding: 1rem; }
+        .match-header { padding: 2rem 1rem; }
+        .teams-display { flex-direction: column; gap: 1.5rem; }
+        .vs-container { margin: 1rem 0; }
+        .score-board { font-size: 2.5rem; }
+        .team-logo-large { width: 80px; height: 80px; }
+        .no-logo-large { width: 80px; height: 80px; font-size: 24px; }
+        .odds-grid { grid-template-columns: 1fr; }
+        .main-odds { gap: 0.5rem; }
+    }
+
+    /* --- Betting Modal (Reused & Polished) --- */
     .bet-modal {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
+        z-index: 2000;
         opacity: 0;
         pointer-events: none;
         transition: all 0.3s ease;
@@ -339,229 +367,13 @@
         width: 90%;
         max-width: 400px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        transform: translateY(20px);
-        transition: all 0.3s ease;
+        transform: translateY(30px);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .bet-modal.active .bet-card {
         transform: translateY(0);
-    }
-
-    .bet-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .bet-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: white;
-    }
-
-    .close-btn {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-
-    .bet-info {
-        background: rgba(15, 23, 42, 0.5);
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-    }
-
-    .bet-info-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-
-    .bet-input-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .bet-input {
-        width: 100%;
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-        border-radius: 12px;
-        color: white;
-        font-size: 1.2rem;
-        font-weight: 700;
-        margin-top: 0.5rem;
-    }
-
-    .place-bet-btn {
-        width: 100%;
-        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
-        color: white;
-        border: none;
-        padding: 1rem;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .place-bet-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-    }
-
-    .place-bet-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* User Bets Section */
-    .user-bets-section {
-        margin-top: 3rem;
-        background: rgba(30, 41, 59, 0.4);
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .bets-list {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .bet-item {
-        background: rgba(15, 23, 42, 0.6);
-        border-radius: 12px;
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .bet-status {
-        padding: 0.25rem 0.75rem;
-        border-radius: 50px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .status-pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
-    .status-won { background: rgba(6, 214, 160, 0.1); color: #06d6a0; }
-    .status-lost { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-    /* Messages */
-    .messages-container {
-        margin-bottom: 2rem;
-    }
-
-    .message {
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 1rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .message.success {
-        background: rgba(6, 214, 160, 0.1);
-        color: var(--secondary);
-        border: 1px solid rgba(6, 214, 160, 0.2);
-    }
-
-    .message.error {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-
-    /* Checkbox Style */
-    .checkbox-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .checkbox-wrapper input[type="checkbox"] {
-        width: 1.2rem;
-        height: 1.2rem;
-        accent-color: var(--primary);
-        cursor: pointer;
-    }
-
-    /* Toast Notification */
-    .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(30, 41, 59, 0.95);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.1);
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        transform: translateY(100px);
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    }
-
-    .toast.show {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    .toast.success { border-left: 4px solid var(--secondary); }
-    .toast.error { border-left: 4px solid #ef4444; }
-
-    @media (max-width: 768px) {
-        .match-detail-container {
-            padding: 1rem;
-        }
-
-        .teams-display {
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .vs-container {
-            margin: 1.5rem 0;
-        }
-
-        .odds-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .team-logo-large {
-            width: 100px;
-            height: 100px;
-        }
-
-        .no-logo-large {
-            width: 100px;
-            height: 100px;
-            font-size: 24px;
-        }
-
-        .team-name {
-            font-size: 1.4rem;
-        }
     }
 </style>
 
@@ -572,6 +384,45 @@
     stake: '',
     userBalance: {{ user.profile.balance|default:0 }},
     isSubmitting: false,
+    prevOdds: {}, // Store previous odds to detect changes
+    matchData: {
+        status: '{{ match.status }}',
+        home_score: {{ match.home_score|default:'null' }},
+        away_score: {{ match.away_score|default:'null' }},
+        odds: {
+            home: '{{ match.odds.first.home_odds|default:"" }}',
+            draw: '{{ match.odds.first.draw_odds|default:"" }}',
+            away: '{{ match.odds.first.away_odds|default:"" }}',
+            '1x': '{{ match.odds_1x|default:match.odds.first.get_1x_odds|default:"" }}',
+            '12': '{{ match.odds_12|default:match.odds.first.get_12_odds|default:"" }}',
+            'x2': '{{ match.odds_x2|default:match.odds.first.get_x2_odds|default:"" }}',
+            'over_25': '{{ match.odds_over_2_5|default:"" }}',
+            'under_25': '{{ match.odds_under_2_5|default:"" }}',
+            'handicap_home': '{{ match.odds_handicap_home|default:"" }}',
+            'handicap_away': '{{ match.odds_handicap_away|default:"" }}',
+            'btts_yes': '{{ match.odds_btts_yes|default:"" }}',
+            'btts_no': '{{ match.odds_btts_no|default:"" }}'
+        }
+    },
+
+    getOddsClass(key) {
+        if (!this.prevOdds[key]) return '';
+        const current = parseFloat(this.matchData.odds[key]);
+        const prev = parseFloat(this.prevOdds[key]);
+        if (current > prev) return 'odds-up';
+        if (current < prev) return 'odds-down';
+        return '';
+    },
+
+    openBetModal(type, odds, label) {
+        if (!odds || odds === 'None' || odds === '') return;
+        this.selectedBet = { type: type, odds: odds, label: label };
+        this.showBetModal = true;
+        setTimeout(() => {
+            const input = document.querySelector('.bet-input');
+            if(input) input.focus();
+        }, 100);
+    },
 
     placeBet() {
         if (this.stake <= 0 || this.stake > this.userBalance) return;
@@ -597,7 +448,6 @@
             if (data.success) {
                 this.userBalance = data.new_balance;
                 showToast(data.message, 'success');
-                // Optional: Reload page after delay to show new bet in list
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 showToast(data.error, 'error');
@@ -607,12 +457,32 @@
             this.isSubmitting = false;
             showToast('An error occurred. Please try again.', 'error');
         });
+    },
+
+    fetchMatchUpdates() {
+        // Save current odds before updating
+        this.prevOdds = { ...this.matchData.odds };
+
+        fetch('{% url 'match_detail' match.id %}', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            this.matchData = data;
+        })
+        .catch(err => console.error('Error fetching live updates:', err));
+    },
+
+    init() {
+        setInterval(() => this.fetchMatchUpdates(), 10000); // Poll every 10s for smoother live feel
     }
-}">
+}" x-init="init()">
     <!-- Back Button -->
     <button onclick="window.history.back()" class="back-button">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
     </button>
 
     <!-- Match Header -->
@@ -621,10 +491,7 @@
             <!-- Home Team -->
             <div class="team">
                 {% if match.home_team.logo_url %}
-                <img src="{{ match.home_team.logo_url }}" 
-                     alt="{{ match.home_team.name }} logo" 
-                     class="team-logo-large"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 {% endif %}
                 <div class="no-logo-large" style="{% if match.home_team.logo_url %}display: none;{% endif %}">
                     {{ match.home_team.name|slice:":2"|upper }}
@@ -632,28 +499,34 @@
                 <div class="team-name">{{ match.home_team.name }}</div>
             </div>
 
-            <!-- VS and Match Info -->
+            <!-- Scoreboard -->
             <div class="vs-container">
-                <div class="vs">VS</div>
+                <div class="score-board">
+                    <span class="score-digit" x-text="matchData.home_score !== null ? matchData.home_score : '-'">-</span>
+                    <span style="opacity: 0.5; font-size: 2rem;">:</span>
+                    <span class="score-digit" x-text="matchData.away_score !== null ? matchData.away_score : '-'">-</span>
+                </div>
+
                 <div class="match-info-badge">
-                    <div class="match-time">
-                        <i class="fas fa-clock"></i>
-                        {{ match.match_date|date:"M d, Y H:i" }}
-                    </div>
-                    <div class="match-league">
-                        <i class="fas fa-trophy"></i>
-                        {{ match.league }}
-                    </div>
+                    <template x-if="matchData.status === 'live'">
+                        <div class="live-indicator">
+                            <i class="fas fa-circle" style="font-size: 0.6rem;"></i> LIVE
+                        </div>
+                    </template>
+                    <template x-if="matchData.status !== 'live'">
+                        <div class="match-time">
+                            <i class="fas fa-calendar-day"></i>
+                            {{ match.match_date|date:"M d, H:i" }}
+                        </div>
+                    </template>
+                    <div class="match-league">{{ match.league }}</div>
                 </div>
             </div>
 
             <!-- Away Team -->
             <div class="team">
                 {% if match.away_team.logo_url %}
-                <img src="{{ match.away_team.logo_url }}" 
-                     alt="{{ match.away_team.name }} logo" 
-                     class="team-logo-large"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 {% endif %}
                 <div class="no-logo-large" style="{% if match.away_team.logo_url %}display: none;{% endif %}">
                     {{ match.away_team.name|slice:":2"|upper }}
@@ -663,126 +536,40 @@
         </div>
     </div>
 
-    <!-- User Bets Section (Only if logged in and has bets on this match) -->
-    {% if user.is_authenticated and user_bets %}
-    <div class="user-bets-section">
-        <h3 class="section-title" style="font-size: 1.4rem; margin-bottom: 1rem;">
-            <i class="fas fa-ticket-alt" style="color: var(--primary);"></i> Your Bets
-        </h3>
-        <div class="bets-list">
-            {% for bet in user_bets %}
-            <div class="bet-item">
-                <div>
-                    <div style="font-weight: 700; color: white;">{{ bet.get_bet_type_display }}</div>
-                    <div style="color: var(--text-muted); font-size: 0.9rem;">
-                        Stake: {{ bet.amount }} @ {{ bet.odds }}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div class="bet-status status-{{ bet.status }}">
-                        {{ bet.status|capfirst }}
-                    </div>
-                    <div style="color: var(--secondary); font-weight: 600; font-size: 0.9rem; margin-top: 0.25rem;">
-                        Potential: {{ bet.potential_payout }}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Odds Section -->
     <div class="odds-section">
         <div class="section-header">
             <h2 class="section-title">
-                <i class="fas fa-chart-line" style="color: var(--secondary);"></i>
-                Betting Odds
+                <i class="fas fa-chart-bar" style="color: var(--secondary);"></i> Markets
             </h2>
-            <div class="last-updated" style="color: var(--text-muted); font-size: 0.9rem;">
-                <i class="fas fa-sync-alt"></i> Updated: {% now "H:i" %}
-            </div>
         </div>
 
         {% if match.odds.all %}
             <div class="odds-grid">
-                {% for odds in match.odds.all %}
-                <div class="bookmaker-card">
-                    <div class="bookmaker-header">
-                        <div class="bookmaker-name">
-                            <i class="fas fa-coins" style="color: var(--primary);"></i>
-                            {{ odds.bookmaker.name }}
-                        </div>
-                        <div style="color: var(--secondary); font-size: 0.8rem; font-weight: 600; background: rgba(6, 214, 160, 0.1); padding: 0.2rem 0.6rem; border-radius: 10px;">
-                            LIVE
-                        </div>
-                    </div>
-
+                <div class="bookmaker-card" style="grid-column: 1 / -1;">
                     <!-- Odds Type Selector -->
                     <div class="odds-types">
-                        <button 
-                            @click="activeOddsType = '1x2'" 
-                            class="odds-type-button"
-                            :class="{ 'active': activeOddsType === '1x2' }"
-                        >
-                            Match Winner
-                        </button>
-                        <button 
-                            @click="activeOddsType = 'double-chance'" 
-                            class="odds-type-button"
-                            :class="{ 'active': activeOddsType === 'double-chance' }"
-                        >
-                            Double Chance
-                        </button>
-                        <button
-                            @click="activeOddsType = 'total'"
-                            class="odds-type-button"
-                            :class="{ 'active': activeOddsType === 'total' }"
-                        >
-                            Total Goals
-                        </button>
-                        <button
-                            @click="activeOddsType = 'handicap'"
-                            class="odds-type-button"
-                            :class="{ 'active': activeOddsType === 'handicap' }"
-                        >
-                            Handicap
-                        </button>
-                        <button
-                            @click="activeOddsType = 'btts'"
-                            class="odds-type-button"
-                            :class="{ 'active': activeOddsType === 'btts' }"
-                        >
-                            Both Teams To Score
-                        </button>
+                        <button @click="activeOddsType = '1x2'" class="odds-type-button" :class="{ 'active': activeOddsType === '1x2' }">Match Winner</button>
+                        <button @click="activeOddsType = 'double-chance'" class="odds-type-button" :class="{ 'active': activeOddsType === 'double-chance' }">Double Chance</button>
+                        <button @click="activeOddsType = 'total'" class="odds-type-button" :class="{ 'active': activeOddsType === 'total' }">Total Goals</button>
+                        <button @click="activeOddsType = 'handicap'" class="odds-type-button" :class="{ 'active': activeOddsType === 'handicap' }">Handicap</button>
+                        <button @click="activeOddsType = 'btts'" class="odds-type-button" :class="{ 'active': activeOddsType === 'btts' }">Both Teams To Score</button>
                     </div>
 
                     <!-- Main 1X2 Odds -->
                     <div x-show="activeOddsType === '1x2'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                         <div class="main-odds">
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'home', odds: '{{ odds.home_odds }}', label: 'Home Win' }">
-                                <div class="odds-value">{{ odds.home_odds }}</div>
+                            <div class="odds-item" :class="getOddsClass('home')" @click="openBetModal('home', matchData.odds.home, 'Home Win')">
+                                <div class="odds-value" x-text="matchData.odds.home || '-'"></div>
                                 <div class="odds-label">1 (Home)</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'draw', odds: '{{ odds.draw_odds }}', label: 'Draw' }">
-                                <div class="odds-value">{{ odds.draw_odds }}</div>
+                            <div class="odds-item" :class="getOddsClass('draw')" @click="openBetModal('draw', matchData.odds.draw, 'Draw')">
+                                <div class="odds-value" x-text="matchData.odds.draw || '-'"></div>
                                 <div class="odds-label">X (Draw)</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'away', odds: '{{ odds.away_odds }}', label: 'Away Win' }">
-                                <div class="odds-value">{{ odds.away_odds }}</div>
+                            <div class="odds-item" :class="getOddsClass('away')" @click="openBetModal('away', matchData.odds.away, 'Away Win')">
+                                <div class="odds-value" x-text="matchData.odds.away || '-'"></div>
                                 <div class="odds-label">2 (Away)</div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Stats -->
-                        <div class="additional-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Payout</span>
-                                <span class="stat-value" style="color: var(--secondary);">95.4%</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Margin</span>
-                                <span class="stat-value">{{ odds.get_margin|default:"4.6" }}%</span>
                             </div>
                         </div>
                     </div>
@@ -790,22 +577,16 @@
                     <!-- Double Chance Odds -->
                     <div x-show="activeOddsType === 'double-chance'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
                         <div class="main-odds">
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: '1x', odds: '{{ match.odds_1x|default:odds.get_1x_odds }}', label: '1X' }">
-                                <div class="odds-value">
-                                    {{ match.odds_1x|default:odds.get_1x_odds|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('1x')" @click="openBetModal('1x', matchData.odds['1x'], '1X')">
+                                <div class="odds-value" x-text="matchData.odds['1x'] || '-'"></div>
                                 <div class="odds-label">1X</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: '12', odds: '{{ match.odds_12|default:odds.get_12_odds }}', label: '12' }">
-                                <div class="odds-value">
-                                    {{ match.odds_12|default:odds.get_12_odds|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('12')" @click="openBetModal('12', matchData.odds['12'], '12')">
+                                <div class="odds-value" x-text="matchData.odds['12'] || '-'"></div>
                                 <div class="odds-label">12</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'x2', odds: '{{ match.odds_x2|default:odds.get_x2_odds }}', label: 'X2' }">
-                                <div class="odds-value">
-                                    {{ match.odds_x2|default:odds.get_x2_odds|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('x2')" @click="openBetModal('x2', matchData.odds['x2'], 'X2')">
+                                <div class="odds-value" x-text="matchData.odds['x2'] || '-'"></div>
                                 <div class="odds-label">X2</div>
                             </div>
                         </div>
@@ -814,16 +595,12 @@
                     <!-- Total Goals Odds -->
                     <div x-show="activeOddsType === 'total'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
                         <div class="main-odds" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'over_25', odds: '{{ match.odds_over_2_5|default:"-" }}', label: 'Over 2.5' }">
-                                <div class="odds-value">
-                                    {{ match.odds_over_2_5|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('over_25')" @click="openBetModal('over_25', matchData.odds.over_25, 'Over 2.5')">
+                                <div class="odds-value" x-text="matchData.odds.over_25 || '-'"></div>
                                 <div class="odds-label">Over 2.5</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'under_25', odds: '{{ match.odds_under_2_5|default:"-" }}', label: 'Under 2.5' }">
-                                <div class="odds-value">
-                                    {{ match.odds_under_2_5|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('under_25')" @click="openBetModal('under_25', matchData.odds.under_25, 'Under 2.5')">
+                                <div class="odds-value" x-text="matchData.odds.under_25 || '-'"></div>
                                 <div class="odds-label">Under 2.5</div>
                             </div>
                         </div>
@@ -832,16 +609,12 @@
                     <!-- Handicap Odds -->
                     <div x-show="activeOddsType === 'handicap'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
                         <div class="main-odds" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'handicap_home', odds: '{{ match.odds_handicap_home|default:"-" }}', label: '{{ match.home_team.name }} (-1.5)' }">
-                                <div class="odds-value">
-                                    {{ match.odds_handicap_home|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('handicap_home')" @click="openBetModal('handicap_home', matchData.odds.handicap_home, '{{ match.home_team.name }} (-1.5)')">
+                                <div class="odds-value" x-text="matchData.odds.handicap_home || '-'"></div>
                                 <div class="odds-label">{{ match.home_team.name }} (-1.5)</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'handicap_away', odds: '{{ match.odds_handicap_away|default:"-" }}', label: '{{ match.away_team.name }} (+1.5)' }">
-                                <div class="odds-value">
-                                    {{ match.odds_handicap_away|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('handicap_away')" @click="openBetModal('handicap_away', matchData.odds.handicap_away, '{{ match.away_team.name }} (+1.5)')">
+                                <div class="odds-value" x-text="matchData.odds.handicap_away || '-'"></div>
                                 <div class="odds-label">{{ match.away_team.name }} (+1.5)</div>
                             </div>
                         </div>
@@ -850,23 +623,17 @@
                     <!-- BTTS Odds -->
                     <div x-show="activeOddsType === 'btts'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
                         <div class="main-odds" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'btts_yes', odds: '{{ match.odds_btts_yes|default:"-" }}', label: 'BTTS - Yes' }">
-                                <div class="odds-value">
-                                    {{ match.odds_btts_yes|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('btts_yes')" @click="openBetModal('btts_yes', matchData.odds.btts_yes, 'BTTS - Yes')">
+                                <div class="odds-value" x-text="matchData.odds.btts_yes || '-'"></div>
                                 <div class="odds-label">Yes</div>
                             </div>
-                            <div class="odds-item" @click="showBetModal = true; selectedBet = { type: 'btts_no', odds: '{{ match.odds_btts_no|default:"-" }}', label: 'BTTS - No' }">
-                                <div class="odds-value">
-                                    {{ match.odds_btts_no|default:"-" }}
-                                </div>
+                            <div class="odds-item" :class="getOddsClass('btts_no')" @click="openBetModal('btts_no', matchData.odds.btts_no, 'BTTS - No')">
+                                <div class="odds-value" x-text="matchData.odds.btts_no || '-'"></div>
                                 <div class="odds-label">No</div>
                             </div>
                         </div>
                     </div>
-
                 </div>
-                {% endfor %}
             </div>
         {% else %}
             <div style="text-align: center; padding: 4rem; background: rgba(30, 41, 59, 0.4); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05);">
@@ -877,7 +644,7 @@
         {% endif %}
     </div>
 
-    <!-- Betting Modal -->
+    <!-- Betting Modal (Same as before, just ensuring styles match) -->
     <div class="bet-modal" :class="{ 'active': showBetModal }">
         <div class="bet-card">
             <div class="bet-header">
@@ -933,21 +700,12 @@
     </div>
 
     <script>
-        // Auto-refresh odds every 30 seconds
-        setInterval(() => {
-            window.location.reload();
-        }, 30000);
-
         function showToast(message, type) {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-message');
-
             msgEl.innerText = message;
             toast.className = `toast show ${type}`;
-
-            setTimeout(() => {
-                toast.className = 'toast';
-            }, 3000);
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
         }
     </script>
 </div>

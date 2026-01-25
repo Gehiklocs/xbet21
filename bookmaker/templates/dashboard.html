@@ -325,10 +325,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.home_team.logo_url %}
                                     <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
+                                {% endif %}
                             </div>
                             <span class="team-name-text">{{ match.home_team.name }}</span>
                         </div>
@@ -341,10 +342,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.away_team.logo_url %}
                                     <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.away_team.name }}</span>
                         </div>
@@ -405,10 +407,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.home_team.logo_url %}
                                     <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.home_team.name }}</span>
                         </div>
@@ -419,10 +422,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.away_team.logo_url %}
                                     <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.away_team.name }}</span>
                         </div>
@@ -483,10 +487,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.home_team.logo_url %}
                                     <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.home_team.name }}</span>
                         </div>
@@ -497,10 +502,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.away_team.logo_url %}
                                     <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.away_team.name }}</span>
                         </div>
@@ -567,10 +573,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.home_team.logo_url %}
                                     <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.home_team.name }}</span>
                         </div>
@@ -583,10 +590,11 @@
                             <div class="team-logo-wrapper">
                                 {% if match.away_team.logo_url %}
                                     <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% endif %}
+                                {% else %}
                                 <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
+{% endif %}
                             </div>
                             <span class="team-name-text">{{ match.away_team.name }}</span>
                         </div>

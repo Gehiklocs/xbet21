@@ -615,12 +615,449 @@
     gap: 0.5rem;
 }
 </style>
+<style>
+    /* Modal Overlay */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 1rem;
+    }
+
+    /* Modal Content */
+    .modal-content {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 500px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Modal Header */
+    .modal-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 214, 160, 0.1));
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modal-header h3:before {
+        content: '🎯';
+        font-size: 1.2rem;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+    }
+
+    .modal-close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: #ef4444;
+        transform: rotate(90deg);
+    }
+
+    /* Modal Body */
+    .modal-body {
+        padding: 2rem;
+    }
+
+    /* Bet Details */
+    .bet-details {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .bet-match {
+        font-size: 1.1rem;
+        color: white;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .bet-match:before {
+        content: '⚽';
+        font-size: 1rem;
+    }
+
+    .bet-selection, .bet-odds {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .bet-selection span, .bet-odds span {
+        color: var(--text-muted);
+    }
+
+    .bet-selection strong, .bet-odds strong {
+        color: white;
+        font-weight: 600;
+    }
+
+    .bet-selection strong {
+        color: var(--secondary);
+    }
+
+    .bet-odds strong {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    /* Stake Section */
+    .stake-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .stake-section label {
+        display: block;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .stake-input {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .stake-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .balance-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(6, 214, 160, 0.05);
+        border-radius: 8px;
+    }
+
+    .balance-info span {
+        color: var(--secondary);
+        font-weight: 700;
+    }
+
+    /* Potential Win */
+    .potential-win {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 214, 160, 0.1));
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        margin: 1.5rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .potential-win span {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .potential-win strong {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Accept Changes */
+    .accept-changes {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 0.5rem;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--secondary);
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .checkbox-label span {
+        font-size: 0.95rem;
+    }
+
+    .text-muted {
+        color: var(--text-muted) !important;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        display: block;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        gap: 1rem;
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .btn-secondary, .btn-primary {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(6, 214, 160, 0.4);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Animation for modal content */
+    .modal-content {
+        animation: modalSlideUp 0.4s ease-out;
+    }
+
+    @keyframes modalSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .modal-content {
+            margin: 1rem;
+            max-width: calc(100% - 2rem);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .bet-details {
+            padding: 1.25rem;
+        }
+
+        .potential-win {
+            padding: 1rem 1.25rem;
+        }
+
+        .potential-win strong {
+            font-size: 1.3rem;
+        }
+
+        .btn-secondary, .btn-primary {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.95rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .modal-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 1.25rem 1rem;
+        }
+
+        .modal-footer {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .bet-selection, .bet-odds {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .bet-selection strong, .bet-odds strong {
+            align-self: flex-end;
+        }
+    }
+
+    /* Add glow effect on successful bet */
+    .success-glow {
+        animation: successGlow 2s ease-in-out;
+    }
+
+    @keyframes successGlow {
+        0%, 100% {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        50% {
+            box-shadow: 0 25px 50px -12px rgba(6, 214, 160, 0.3);
+        }
+    }
+</style>
+<style>
+/* Quick Stake Buttons */
+.quick-stake-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 0.75rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.quick-stake-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: var(--primary);
+}
+
+.quick-stake-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Loading state */
+.btn-primary.loading {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Hide Alpine.js elements until initialized */
+[x-cloak] {
+    display: none !important;
+}
+</style>
 
 
+<div class="match-detail-container"
+     x-data="matchDetail()">
 
-
-
-<div class="match-detail-container" x-data="{ activeOddsType: '1x2' }">
     <!-- Back Button -->
     <button onclick="window.history.back()" class="back-button">
         <i class="fas fa-arrow-left"></i>
@@ -633,8 +1070,8 @@
             <!-- Home Team -->
             <div class="team">
                 {% if match.home_team.logo_url %}
-                <img src="{{ match.home_team.logo_url }}" 
-                     alt="{{ match.home_team.name }} logo" 
+                <img src="{{ match.home_team.logo_url }}"
+                     alt="{{ match.home_team.name }} logo"
                      class="team-logo-large"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 {% endif %}
@@ -656,14 +1093,18 @@
                         <i class="fas fa-trophy"></i>
                         {{ match.league }}
                     </div>
+                    <!-- Live Score Display -->
+                    <div class="live-score" x-show="matchData.home_score !== null && matchData.away_score !== null">
+                        <span x-text="matchData.home_score"></span> - <span x-text="matchData.away_score"></span>
+                    </div>
                 </div>
             </div>
 
             <!-- Away Team -->
             <div class="team">
                 {% if match.away_team.logo_url %}
-                <img src="{{ match.away_team.logo_url }}" 
-                     alt="{{ match.away_team.name }} logo" 
+                <img src="{{ match.away_team.logo_url }}"
+                     alt="{{ match.away_team.name }} logo"
                      class="team-logo-large"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 {% endif %}
@@ -683,7 +1124,7 @@
                 Betting Odds
             </h2>
             <div class="last-updated" style="color: var(--text-muted); font-size: 0.9rem;">
-                <i class="fas fa-sync-alt"></i> Updated: {% now "H:i" %}
+                <i class="fas fa-sync-alt"></i> Updated: <span x-text="lastUpdated"></span>
             </div>
         </div>
 
@@ -703,15 +1144,15 @@
 
                     <!-- Odds Type Selector -->
                     <div class="odds-types">
-                        <button 
-                            @click="activeOddsType = '1x2'" 
+                        <button
+                            @click="activeOddsType = '1x2'"
                             class="odds-type-button"
                             :class="{ 'active': activeOddsType === '1x2' }"
                         >
                             Match Winner
                         </button>
-                        <button 
-                            @click="activeOddsType = 'double-chance'" 
+                        <button
+                            @click="activeOddsType = 'double-chance'"
                             class="odds-type-button"
                             :class="{ 'active': activeOddsType === 'double-chance' }"
                         >
@@ -723,24 +1164,30 @@
                     <div x-show="activeOddsType === '1x2'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                         <div class="main-odds">
                             <div class="odds-item">
-                                <div class="odds-value">{{ odds.home_odds }}</div>
-                                <div class="odds-label">1 (Home)</div>
+                                <button class="odds-button" @click="openBetModal('home', matchData.odds.home, '{{ match.home_team.name }} Win', '1x2', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.home || '{{ odds.home_odds }}'"></div>
+                                    <div class="odds-label">1 (Home)</div>
+                                </button>
                             </div>
                             <div class="odds-item">
-                                <div class="odds-value">{{ odds.draw_odds }}</div>
-                                <div class="odds-label">X (Draw)</div>
+                                <button class="odds-button" @click="openBetModal('draw', matchData.odds.draw, 'Draw', '1x2', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.draw || '{{ odds.draw_odds }}'"></div>
+                                    <div class="odds-label">X (Draw)</div>
+                                </button>
                             </div>
                             <div class="odds-item">
-                                <div class="odds-value">{{ odds.away_odds }}</div>
-                                <div class="odds-label">2 (Away)</div>
+                                <button class="odds-button" @click="openBetModal('away', matchData.odds.away, '{{ match.away_team.name }} Win', '1x2', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.away || '{{ odds.away_odds }}'"></div>
+                                    <div class="odds-label">2 (Away)</div>
+                                </button>
                             </div>
                         </div>
 
                         <!-- Additional Stats -->
                         <div class="additional-stats">
                             <div class="stat-item">
-                                <span class="stat-label">Payout</span>
-                                <span class="stat-value" style="color: var(--secondary);">95.4%</span>
+                                <span class="stat-label">Bookmaker</span>
+                                <span class="stat-value">{{ odds.bookmaker.name }}</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Margin</span>
@@ -753,22 +1200,22 @@
                     <div x-show="activeOddsType === 'double-chance'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
                         <div class="main-odds">
                             <div class="odds-item">
-                                <div class="odds-value">
-                                    {{ odds.get_1x_odds|default:"-" }}
-                                </div>
-                                <div class="odds-label">1X</div>
+                                <button class="odds-button" @click="openBetModal('1x', matchData.odds.double_chance_1x, '1X ({{ match.home_team.name }} Win or Draw)', 'double-chance', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_1x || '{{ odds.get_1x_odds|default:"-" }}'"></div>
+                                    <div class="odds-label">1X</div>
+                                </button>
                             </div>
                             <div class="odds-item">
-                                <div class="odds-value">
-                                    {{ odds.get_12_odds|default:"-" }}
-                                </div>
-                                <div class="odds-label">12</div>
+                                <button class="odds-button" @click="openBetModal('12', matchData.odds.double_chance_12, '12 ({{ match.home_team.name }} or {{ match.away_team.name }} Win)', 'double-chance', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_12 || '{{ odds.get_12_odds|default:"-" }}'"></div>
+                                    <div class="odds-label">12</div>
+                                </button>
                             </div>
                             <div class="odds-item">
-                                <div class="odds-value">
-                                    {{ odds.get_x2_odds|default:"-" }}
-                                </div>
-                                <div class="odds-label">X2</div>
+                                <button class="odds-button" @click="openBetModal('x2', matchData.odds.double_chance_x2, 'X2 (Draw or {{ match.away_team.name }} Win)', 'double-chance', {{ odds.bookmaker.id }})">
+                                    <div class="odds-value" x-text="matchData.odds.double_chance_x2 || '{{ odds.get_x2_odds|default:"-" }}'"></div>
+                                    <div class="odds-label">X2</div>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -784,57 +1231,390 @@
         {% endif %}
     </div>
 
-    <script>
-        // Auto-refresh odds every 30 seconds
-        setInterval(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
+    <!-- Bet Modal -->
+   <!-- Bet Modal -->
+<div x-show="showBetModal" x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="modal-overlay" @click.self="showBetModal = false" x-cloak>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Place Your Bet</h3>
+            <button @click="showBetModal = false" class="modal-close" :disabled="isLoading">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Bet Details -->
+            <div class="bet-details">
+                <div class="bet-match">
+                    <i class="fas fa-futbol"></i>
+                    <strong>{{ match.home_team.name }} vs {{ match.away_team.name }}</strong>
+                </div>
+                <div class="bet-selection">
+                    <span>Selection: </span>
+                    <strong x-text="betModalData.label"></strong>
+                </div>
+                <div class="bet-odds">
+                    <span>Odds: </span>
+                    <strong x-text="betModalData.odds"></strong>
+                </div>
+            </div>
+
+            <!-- Quick Stake Buttons -->
+            <div class="quick-stake-section" style="margin-bottom: 1.5rem;">
+                <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">
+                    Quick Stake
+                </label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <template x-for="amount in [5, 10, 25, 50, 100]">
+                        <button @click="quickStake(amount)"
+                                class="quick-stake-btn"
+                                :class="{ 'active': stakeAmount === amount }">
+                            $<span x-text="amount"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Stake Amount -->
+            <div class="stake-section">
+                <label for="stakeAmount">Stake Amount</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);">$</span>
+                    <input type="number" id="stakeAmount" x-model="stakeAmount"
+                           min="1" :max="userBalance" step="0.01"
+                           class="stake-input" style="padding-left: 2.5rem;"
+                           :disabled="isLoading">
+                </div>
+                <div class="balance-info">
+                    <i class="fas fa-wallet"></i>
+                    Available Balance: $<span x-text="userBalance.toFixed(2)"></span>
+                </div>
+            </div>
+
+            <!-- Potential Win -->
+            <div class="potential-win">
+                <div>
+                    <span>Potential Win:</span>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        (Stake × Odds)
+                    </div>
+                </div>
+                <strong>$<span x-text="calculatePotentialWin()"></span></strong>
+            </div>
+
+            <!-- Accept Coefficient Changes -->
+            <div class="accept-changes">
+                <label class="checkbox-label">
+                    <input type="checkbox" x-model="acceptCoefficientChanges" :disabled="isLoading">
+                    <span>I accept that odds may change before bet confirmation</span>
+                </label>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    By checking this, you agree to accept any coefficient changes that may occur.
+                </small>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button @click="showBetModal = false" class="btn-secondary" :disabled="isLoading">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+            <button @click="placeBet()" class="btn-primary"
+                    :disabled="!canPlaceBet()"
+                    :class="{ 'loading': isLoading }">
+                <template x-if="!isLoading">
+                    <span>
+                        <i class="fas fa-check-circle"></i>
+                        Place Bet
+                    </span>
+                </template>
+                <template x-if="isLoading">
+                    <span>
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Processing...
+                    </span>
+                </template>
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- Betslip Section -->
-
-
-<!-- Add this JavaScript function at the end -->
 <script>
-function placeBet() {
-    // Collect bet data from Alpine.js state
-    const betData = {
-        match_id: {{ match.id }},
-        bet_type: Alpine.$data(document.querySelector('.betslip-section'), 'activeBetType'),
-        selected_option: Alpine.$data(document.querySelector('.betslip-section'), 'selectedBet'),
-        coefficient: Alpine.$data(document.querySelector('.betslip-section'), 'coefficient'),
-        stake_amount: Alpine.$data(document.querySelector('.betslip-section'), 'stakeAmount'),
-        accept_changes: Alpine.$data(document.querySelector('.betslip-section'), 'acceptCoefficientChanges')
-    };
-
-    // Send AJAX request to place bet
-    fetch('/api/place-bet/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
+// Alpine.js Component
+function matchDetail() {
+    return {
+        activeOddsType: '1x2',
+        matchData: {
+            status: '{{ match.status|escapejs }}',
+            home_score: {{ match.home_score|default:'null' }},
+            away_score: {{ match.away_score|default:'null' }},
+            home_team: '{{ match.home_team.name|escapejs }}',
+            away_team: '{{ match.away_team.name|escapejs }}',
+            match_id: {{ match.id }},
+            odds: {
+                home: null,
+                draw: null,
+                away: null,
+                bookmaker: null,
+                bookmaker_id: null,
+                double_chance_1x: null,
+                double_chance_12: null,
+                double_chance_x2: null
+            }
         },
-        body: JSON.stringify(betData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Bet placed successfully!', 'success');
-            // Reset form
-            Alpine.$data(document.querySelector('.betslip-section'), 'stakeAmount', 0);
-            Alpine.$data(document.querySelector('.betslip-section'), 'selectedBet', null);
-            Alpine.$data(document.querySelector('.betslip-section'), 'acceptCoefficientChanges', false);
-        } else {
-            showNotification('Error: ' + data.error, 'error');
+        userBalance: {{ request.user.profile.balance|default:0 }},
+        showBetModal: false,
+        betModalData: {
+            type: '',
+            odds: 0,
+            label: '',
+            oddsType: '',
+            bookmaker_id: null
+        },
+        stakeAmount: 10,
+        acceptCoefficientChanges: false,
+        lastUpdated: '{% now "H:i" %}',
+        isLoading: false,
+
+        // Initialize function
+        init() {
+            // Initialize with server data
+            this.initializeServerData();
+            // Fetch initial live data
+            this.fetchMatchUpdates();
+            // Set up interval for live updates
+            setInterval(() => this.fetchMatchUpdates(), 30000);
+        },
+
+        // Initialize with server-side data
+        initializeServerData() {
+            {% if match.odds.all %}
+                {% with odds=match.odds.first %}
+                    this.matchData.odds.home = '{{ odds.home_odds|escapejs }}';
+                    this.matchData.odds.draw = '{{ odds.draw_odds|escapejs }}';
+                    this.matchData.odds.away = '{{ odds.away_odds|escapejs }}';
+                    this.matchData.odds.bookmaker = '{{ odds.bookmaker.name|escapejs }}';
+                    this.matchData.odds.bookmaker_id = {{ odds.bookmaker.id }};
+
+                    // Calculate double chance odds from server data
+                    const homeOdds = parseFloat('{{ odds.home_odds|default:"0" }}');
+                    const drawOdds = parseFloat('{{ odds.draw_odds|default:"0" }}');
+                    const awayOdds = parseFloat('{{ odds.away_odds|default:"0" }}');
+
+                    if (homeOdds > 0 && drawOdds > 0) {
+                        this.matchData.odds.double_chance_1x = (1/(1/homeOdds + 1/drawOdds)).toFixed(2);
+                    }
+                    if (homeOdds > 0 && awayOdds > 0) {
+                        this.matchData.odds.double_chance_12 = (1/(1/homeOdds + 1/awayOdds)).toFixed(2);
+                    }
+                    if (drawOdds > 0 && awayOdds > 0) {
+                        this.matchData.odds.double_chance_x2 = (1/(1/drawOdds + 1/awayOdds)).toFixed(2);
+                    }
+                {% endwith %}
+            {% endif %}
+        },
+
+        // Fetch live match updates
+        async fetchMatchUpdates() {
+            try {
+                const response = await fetch(`/api/match/{{ match.id }}/live/`);
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const data = await response.json();
+
+                // Update matchData with live data
+                this.matchData.status = data.status || this.matchData.status;
+                this.matchData.home_score = data.home_score !== undefined ? data.home_score : this.matchData.home_score;
+                this.matchData.away_score = data.away_score !== undefined ? data.away_score : this.matchData.away_score;
+
+                if (data.odds && data.odds.length > 0) {
+                    const latestOdds = data.odds[0];
+                    this.matchData.odds.home = latestOdds.home_odds || this.matchData.odds.home;
+                    this.matchData.odds.draw = latestOdds.draw_odds || this.matchData.odds.draw;
+                    this.matchData.odds.away = latestOdds.away_odds || this.matchData.odds.away;
+                    this.matchData.odds.bookmaker = latestOdds.bookmaker_name || this.matchData.odds.bookmaker;
+                    this.matchData.odds.bookmaker_id = latestOdds.bookmaker_id || this.matchData.odds.bookmaker_id;
+
+                    // Calculate double chance odds from live data
+                    const homeOdds = parseFloat(latestOdds.home_odds) || parseFloat(this.matchData.odds.home);
+                    const drawOdds = parseFloat(latestOdds.draw_odds) || parseFloat(this.matchData.odds.draw);
+                    const awayOdds = parseFloat(latestOdds.away_odds) || parseFloat(this.matchData.odds.away);
+
+                    if (homeOdds > 0 && drawOdds > 0) {
+                        this.matchData.odds.double_chance_1x = (1/(1/homeOdds + 1/drawOdds)).toFixed(2);
+                    }
+                    if (homeOdds > 0 && awayOdds > 0) {
+                        this.matchData.odds.double_chance_12 = (1/(1/homeOdds + 1/awayOdds)).toFixed(2);
+                    }
+                    if (drawOdds > 0 && awayOdds > 0) {
+                        this.matchData.odds.double_chance_x2 = (1/(1/drawOdds + 1/awayOdds)).toFixed(2);
+                    }
+                }
+
+                // Update last updated time
+                const now = new Date();
+                this.lastUpdated = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            } catch (error) {
+                console.error('Error fetching live updates:', error);
+            }
+        },
+
+        // Open bet modal
+        openBetModal(type, odds, label, oddsType, bookmakerId) {
+            const oddsValue = parseFloat(odds);
+            if (!odds || isNaN(oddsValue) || oddsValue <= 0) {
+                showNotification('Odds not available for this bet type', 'error');
+                return;
+            }
+
+            this.betModalData = {
+                type: type,
+                odds: oddsValue,
+                label: label,
+                oddsType: oddsType,
+                bookmaker_id: bookmakerId || this.matchData.odds.bookmaker_id
+            };
+            this.showBetModal = true;
+            this.stakeAmount = 10;
+            this.acceptCoefficientChanges = false;
+            this.isLoading = false;
+        },
+
+        // Calculate potential win
+        calculatePotentialWin() {
+            if (this.stakeAmount > 0 && this.betModalData.odds) {
+                return (this.stakeAmount * this.betModalData.odds).toFixed(2);
+            }
+            return '0.00';
+        },
+
+        // Place bet via AJAX - ENHANCED VERSION
+        async placeBet() {
+            // Validation
+            if (this.stakeAmount <= 0) {
+                showNotification('Please enter a valid stake amount', 'error');
+                return;
+            }
+
+            if (this.stakeAmount > this.userBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+
+            if (!this.acceptCoefficientChanges) {
+                showNotification('Please accept coefficient changes to continue', 'error');
+                return;
+            }
+
+            // Prepare bet data
+            const betData = {
+                match_id: this.matchData.match_id,
+                bet_type: this.betModalData.oddsType,
+                selected_option: this.betModalData.type,
+                coefficient: this.betModalData.odds,
+                stake_amount: this.stakeAmount,
+                bookmaker_id: this.betModalData.bookmaker_id,
+                accept_changes: this.acceptCoefficientChanges
+            };
+
+            // Set loading state
+            this.isLoading = true;
+
+            try {
+                const response = await fetch('/api/place-bet/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(betData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Add success glow animation to modal
+                    const modal = document.querySelector('.modal-content');
+                    if (modal) {
+                        modal.classList.add('success-glow');
+
+                        // Remove the class after animation completes
+                        setTimeout(() => {
+                            modal.classList.remove('success-glow');
+                        }, 2000);
+                    }
+
+                    // Update user balance locally
+                    this.userBalance = data.new_balance;
+
+                    // Show success message with bet details
+                    const winAmount = (this.stakeAmount * this.betModalData.odds).toFixed(2);
+                    showNotification(`Bet placed successfully! Potential win: $${winAmount}`, 'success');
+
+                    // Close modal after delay
+                    setTimeout(() => {
+                        this.showBetModal = false;
+
+                        // Reset form
+                        this.stakeAmount = 10;
+                        this.acceptCoefficientChanges = false;
+                        this.isLoading = false;
+
+                        // Trigger event to update bets list in parent component
+                        window.dispatchEvent(new CustomEvent('betPlaced', {
+                            detail: {
+                                matchId: this.matchData.match_id,
+                                betType: this.betModalData.oddsType,
+                                amount: this.stakeAmount
+                            }
+                        }));
+                    }, 1500);
+
+                } else {
+                    // Show error message
+                    const errorMsg = data.error || 'Unknown error occurred';
+                    showNotification(`Error: ${errorMsg}`, 'error');
+                    this.isLoading = false;
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Network error. Please try again.', 'error');
+                this.isLoading = false;
+            }
+        },
+
+        // Quick stake amount buttons
+        quickStake(amount) {
+            this.stakeAmount = amount;
+        },
+
+        // Format currency
+        formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        },
+
+        // Check if bet can be placed
+        canPlaceBet() {
+            return this.stakeAmount > 0 &&
+                   this.stakeAmount <= this.userBalance &&
+                   this.acceptCoefficientChanges &&
+                   !this.isLoading;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Network error. Please try again.', 'error');
-    });
+    };
 }
 
+// Helper Functions
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -851,23 +1631,86 @@ function getCookie(name) {
 }
 
 function showNotification(message, type) {
+    // Remove any existing notifications
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
+
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+
+    // Set icon based on type
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    if (type === 'warning') icon = 'exclamation-triangle';
+
     notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
+        <i class="fas fa-${icon}"></i>
+        <span>${message}</span>
     `;
 
     document.body.appendChild(notification);
 
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-</script>
+    // Add styles if not already present
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 20px;
+                border-radius: 12px;
+                color: white;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 400px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .notification.success {
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(6, 214, 160, 0.9));
+            }
+            .notification.error {
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+            }
+            .notification.warning {
+                background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
+            }
+            .notification.info {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+            }
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
+    // Remove after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Initialize Alpine when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Alpine is already initialized via x-data attribute
+    console.log('Match detail page loaded with Alpine.js');
+});
+</script>
 
 
 {% include 'includes/footer.html' %}

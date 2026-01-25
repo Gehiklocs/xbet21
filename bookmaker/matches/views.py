@@ -84,10 +84,32 @@ def match_detail(request, match_id):
 
     # Check if odds exist for non-admin users
     if not request.user.is_staff and not match.odds.exists():
-        # Redirect to dashboard or show a 404 if user shouldn't see this match
-        # For better UX, we can redirect to dashboard with a message
         messages.warning(request, "This match is currently unavailable for betting.")
         return redirect('dashboard')
+
+    # Handle AJAX request for live updates
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        odds = match.odds.first()
+        data = {
+            'status': match.status,
+            'home_score': match.home_score,
+            'away_score': match.away_score,
+            'odds': {
+                'home': odds.home_odds if odds else None,
+                'draw': odds.draw_odds if odds else None,
+                'away': odds.away_odds if odds else None,
+                '1x': match.odds_1x,
+                '12': match.odds_12,
+                'x2': match.odds_x2,
+                'over_25': match.odds_over_2_5,
+                'under_25': match.odds_under_2_5,
+                'handicap_home': match.odds_handicap_home,
+                'handicap_away': match.odds_handicap_away,
+                'btts_yes': match.odds_btts_yes,
+                'btts_no': match.odds_btts_no,
+            }
+        }
+        return JsonResponse(data)
 
     # Get user's bets for this match if logged in
     user_bets = []
@@ -117,13 +139,13 @@ def place_bet(request, match_id):
 
     match = get_object_or_404(Match, id=match_id)
 
-    # Check if match has started (Allow if status is LIVE)
-    if match.status != Match.STATUS_LIVE and match.match_date < timezone.now():
-        return JsonResponse({'error': 'This match has already started!'}, status=400)
-
-    # Also block if match is finished
+    # Check if match is finished (Block betting)
     if match.status == Match.STATUS_FINISHED:
         return JsonResponse({'error': 'This match has finished!'}, status=400)
+        
+    # Check if match has started but is NOT live (Block betting)
+    if match.status != Match.STATUS_LIVE and match.match_date < timezone.now():
+        return JsonResponse({'error': 'This match has already started!'}, status=400)
 
     # Handle both JSON and Form data
     try:

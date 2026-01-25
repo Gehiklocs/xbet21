@@ -3,6 +3,7 @@ import time
 import traceback
 import os
 import logging
+import uuid
 from datetime import timedelta
 
 import qrcode
@@ -35,18 +36,29 @@ def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data["email"]
+            email = form.cleaned_data.get("email")
             password = form.cleaned_data["password"]
+            full_name = form.cleaned_data["full_name"]
+
+            # Generate username if email is missing
+            if email:
+                username = email
+            else:
+                # Create a unique username based on name or random string
+                # e.g. "JohnDoe_1234"
+                base_name = full_name.replace(" ", "").lower()[:10]
+                random_suffix = str(uuid.uuid4())[:6]
+                username = f"{base_name}_{random_suffix}"
 
             user = User.objects.create_user(
-                username=email,
-                email=email,
+                username=username,
+                email=email if email else "",
                 password=password
             )
 
             profile = Profile.objects.create(
                 user=user,
-                full_name=form.cleaned_data["full_name"],
+                full_name=full_name,
                 country=form.cleaned_data["country"],
                 currency=form.cleaned_data["currency"],
                 promo_code=form.cleaned_data["promo_code"],
@@ -66,14 +78,26 @@ def register_view(request):
 def login_view(request):
     error = ""
     if request.method == "POST":
-        email = request.POST.get("email")
+        # This field is named 'email' in the form, but it could be a username now
+        login_input = request.POST.get("email") 
         password = request.POST.get("password")
-        user = authenticate(username=email, password=password)
+        
+        # Try to authenticate as username first
+        user = authenticate(username=login_input, password=password)
+        
+        # If that fails, try to find user by email (if input looks like email)
+        if not user and '@' in login_input:
+            try:
+                u = User.objects.get(email=login_input)
+                user = authenticate(username=u.username, password=password)
+            except User.DoesNotExist:
+                pass
+
         if user:
             login(request, user)
             return redirect("/")
         else:
-            error = "Invalid email or password"
+            error = "Invalid username/email or password"
 
     return render(request, "accounts/login.html", {"error": error})
 

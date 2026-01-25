@@ -1,100 +1,96 @@
 import requests
-import logging
-from django.conf import settings
 import threading
-import socket
+from django.conf import settings
+from django.utils import timezone
 
-logger = logging.getLogger('accounts')
+def get_client_ip(request):
+    """
+    Helper to get the real client IP address, handling proxies.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def send_telegram_message(message):
     """
     Sends a message to the configured Telegram chat.
-    Runs in a separate thread to avoid blocking the main request.
+    Runs in a separate thread to avoid blocking the request.
     """
-    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHAT_ID:
-        logger.warning("Telegram bot token or chat ID not configured.")
+    token = settings.TELEGRAM_BOT_TOKEN
+    chat_id = settings.TELEGRAM_CHAT_ID
+
+    if not token or not chat_id:
         return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "Markdown"
+    }
 
     def _send():
         try:
-            url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
-            data = {
-                "chat_id": settings.TELEGRAM_CHAT_ID,
-                "text": message,
-                "parse_mode": "HTML"
-            }
-            response = requests.post(url, data=data, timeout=5)
-            if response.status_code != 200:
-                logger.error(f"Failed to send Telegram message: {response.text}")
+            requests.post(url, data=data, timeout=5)
         except Exception as e:
-            logger.error(f"Error sending Telegram message: {e}")
+            print(f"Failed to send Telegram message: {e}")
 
     threading.Thread(target=_send).start()
 
 def notify_new_user(user, profile):
     msg = (
-        f"<b>👤 New User Registered</b>\n\n"
-        f"<b>Username:</b> {user.username}\n"
-        f"<b>Email:</b> {user.email}\n"
-        f"<b>Name:</b> {profile.full_name}\n"
-        f"<b>Country:</b> {profile.country}\n"
-        f"<b>Currency:</b> {profile.currency}\n"
-        f"<b>Promo:</b> {profile.promo_code or 'None'}"
+        f"🆕 *New User Registered*\n"
+        f"👤 Username: `{user.username}`\n"
+        f"📧 Email: `{user.email}`\n"
+        f"🌍 Country: {profile.country}\n"
+        f"💰 Currency: {profile.currency}\n"
+        f"🎟️ Promo: {profile.promo_code or 'None'}"
     )
     send_telegram_message(msg)
 
 def notify_deposit_request(tx):
     msg = (
-        f"<b>💸 New Deposit Request</b>\n\n"
-        f"<b>User:</b> {tx.user.username}\n"
-        f"<b>Amount:</b> {tx.amount} {tx.crypto_type}\n"
-        f"<b>Address:</b> <code>{tx.deposit_address}</code>\n"
-        f"<b>ID:</b> #{tx.id}"
+        f"📥 *New Deposit Request*\n"
+        f"👤 User: `{tx.user.username}`\n"
+        f"💎 Crypto: `{tx.crypto_type}`\n"
+        f"💵 Amount: `{tx.amount}`\n"
+        f"🔗 Address: `{tx.deposit_address}`\n"
+        f"🕒 Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
     send_telegram_message(msg)
 
 def notify_deposit_confirmed(tx):
     msg = (
-        f"<b>✅ Deposit Confirmed</b>\n\n"
-        f"<b>User:</b> {tx.user.username}\n"
-        f"<b>Amount:</b> {tx.amount} {tx.crypto_type}\n"
-        f"<b>New Balance:</b> {tx.user.profile.balance} {tx.user.profile.currency}\n"
-        f"<b>ID:</b> #{tx.id}"
+        f"✅ *Deposit Confirmed*\n"
+        f"👤 User: `{tx.user.username}`\n"
+        f"💎 Crypto: `{tx.crypto_type}`\n"
+        f"💵 Amount: `{tx.amount}`\n"
+        f"💰 New Balance: `{tx.user.profile.balance}`"
     )
     send_telegram_message(msg)
 
 def notify_site_visit(request):
     """
-    Notifies Telegram when a user visits the site.
+    Notifies about a site visit (e.g., to the dashboard).
     Includes IP address and User Agent.
     """
-    try:
-        # Get IP Address
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
+    # Simple rate limiting (optional): check session to avoid spamming on every refresh
+    if request.session.get('visit_notified'):
+        return
 
-        # Get User Agent
-        user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
-        
-        # Get User info if logged in
-        user_info = "Guest"
-        if request.user.is_authenticated:
-            user_info = f"{request.user.username} (ID: {request.user.id})"
+    request.session['visit_notified'] = True
 
-        # Get Location (basic geo-ip lookup could be added here, but keeping it simple for now)
-        # For now, just IP and UA
-        
-        msg = (
-            f"<b>👀 New Site Visit</b>\n\n"
-            f"<b>User:</b> {user_info}\n"
-            f"<b>IP:</b> {ip}\n"
-            f"<b>Path:</b> {request.path}\n"
-            f"<b>User Agent:</b> {user_agent[:100]}..." # Truncate UA to avoid huge messages
-        )
-        send_telegram_message(msg)
-        
-    except Exception as e:
-        logger.error(f"Error notifying site visit: {e}")
+    ip = get_client_ip(request)
+    user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
+    user_info = f"`{request.user.username}`" if request.user.is_authenticated else "Guest"
+
+    msg = (
+        f"👀 *New Site Visit*\n"
+        f"👤 User: {user_info}\n"
+        f"🌐 IP: `{ip}`\n"
+        f"📱 Device: `{user_agent[:50]}...`"
+    )
+    send_telegram_message(msg)

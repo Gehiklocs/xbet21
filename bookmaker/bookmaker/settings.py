@@ -30,7 +30,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-c=4la9yyjm-hv4qbpt8f)3ff1*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*'] # Allow all hosts for now, but restrict in production
+ALLOWED_HOSTS = ['whitebet.site', 'www.whitebet.site', 'localhost', '127.0.0.1']
+
+# CSRF Trusted Origins (Crucial for production)
+CSRF_TRUSTED_ORIGINS = ['https://whitebet.site', 'https://www.whitebet.site']
 
 
 # Application definition
@@ -200,6 +203,11 @@ Q_CLUSTER = {
     'label': 'Django Q',
     'orm': 'default',  # Use Django ORM (SQLite) as broker
 }
+
+# Proxy Configuration (Crucial for Docker/Nginx)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 # Security Settings for Production (Uncomment when deploying)
 # CSRF_COOKIE_SECURE = True

@@ -7,7 +7,7 @@ class RegisterForm(forms.Form):
     full_name = forms.CharField(max_length=200)
     country = forms.ChoiceField(choices=Profile.COUNTRIES)
     currency = forms.ChoiceField(choices=Profile.CURRENCIES)
-    email = forms.EmailField()
+    email = forms.EmailField(required=False)  # Made optional
     promo_code = forms.CharField(max_length=100, required=False)
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
@@ -23,9 +23,9 @@ class RegisterForm(forms.Form):
 
         return cleaned
 
-    # email unique check
+    # email unique check (only if email is provided)
     def clean_email(self):
-        email = self.cleaned_data["email"]
-        if User.objects.filter(email=email).exists():
+        email = self.cleaned_data.get("email")
+        if email and User.objects.filter(email=email).exists():
             raise forms.ValidationError("Этот email уже используется")
         return email

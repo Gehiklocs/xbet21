@@ -16,28 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
-from django.conf.urls.static import static
-from matches import views
-
 from django.conf import settings
+from django.conf.urls.static import static
+from django.shortcuts import render
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.matches_dashboard, name='dashboard'),
-    path('dashboard/', views.matches_dashboard, name='dashboard'),
-    path('match/<int:match_id>/', views.match_detail, name='match_detail'),
-    path('match/<int:match_id>/bet/', views.place_bet, name='place_bet'),
-    path('my-bets/', views.my_bets, name='my_bets'),
-    path('matches/', views.matches_dashboard, name='matches_dashboard'),
-
-
-    path("accounts/", include("accounts.urls")),
-
-    # Redirect root to dashboard
-    path('', RedirectView.as_view(pattern_name='dashboard', permanent=False)),
-
+    path('', include('matches.urls')),
+    path('accounts/', include('accounts.urls')),
 ]
 
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Custom 404 handler
+def custom_page_not_found_view(request, exception):
+    return render(request, "404.html", status=404)
+
+handler404 = 'bookmaker.urls.custom_page_not_found_view'
