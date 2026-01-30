@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XStake Odds Dashboard</title>
+    <title>WhiteBet Odds Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.0/cdn.min.js" defer></script>
     {% load static %}
@@ -107,24 +107,14 @@
         }
 
         .logo {
-            font-size: 1.6rem;
-            font-weight: 800;
-            text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 0.2rem;
+            text-decoration: none;
         }
 
-        .logo-x {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2rem;
-        }
-
-        .logo-stake {
-            color: white;
-            letter-spacing: -1px;
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         /* Search Bar */
@@ -432,7 +422,7 @@
 <div id="page-loader">
     <div class="loader-content">
         <div class="loader-spinner"></div>
-        <div class="loader-text">XStake</div>
+        <div class="loader-text">WhiteBet</div>
     </div>
 </div>
 
@@ -441,7 +431,7 @@
         <!-- Logo & Mobile Controls -->
         <div class="header-left">
             <a href="{% url 'dashboard' %}" class="logo">
-                <span class="logo-x">X</span><span class="logo-stake">Stake</span>
+                <img src="{% static 'img/logo.png' %}" alt="WhiteBet">
             </a>
 
             <div style="display: flex; gap: 0.5rem; align-items: center;">

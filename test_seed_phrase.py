@@ -113,11 +113,11 @@ class HDWalletManager:
 
 # Usage:
 # Option A: Create new wallet
-wallet = HDWalletManager()
+# wallet = HDWalletManager()
 # wallet.show_wallet_info()
 # wallet.get_balances()
 
 # Option B: Load existing wallet
-existing_seed = "switch collapse practice feed shame open despair creek road again ice least"
+existing_seed = "limb elite relief day defy provide bracket dial whale prosper primary father"
 wallet = HDWalletManager(existing_seed)
 wallet.get_balances()

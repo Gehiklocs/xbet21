@@ -1,621 +1,1090 @@
 {% include 'includes/header.html' %}
 
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-    /* Modern Dashboard Styles */
-    .dashboard-container {
-        max-width: 1400px;
+    /* Mobile-First CSS Reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        /* Mobile-optimized colors */
+        --bg-primary: #0f172a;
+        --bg-card: #1e293b;
+        --bg-hover: #2d3748;
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --accent: #ec4899;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --border: rgba(255, 255, 255, 0.1);
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Container optimized for mobile */
+    .mobile-container {
+        width: 100%;
+        max-width: 100%;
         margin: 0 auto;
-        padding: 2rem;
+        padding: 0 16px;
     }
 
-    .hero-section {
+    /* Mobile Header */
+    .mobile-header {
+        padding: 20px 0 16px;
         text-align: center;
-        margin-bottom: 3rem;
-        padding: 3rem 1rem;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(6, 214, 160, 0.1) 100%);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
     }
 
-    .hero-title {
-        font-size: 3.5rem;
+    .mobile-header h1 {
+        font-size: 24px;
         font-weight: 800;
-        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+        background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-        letter-spacing: -1px;
+        margin-bottom: 8px;
     }
 
-    .hero-subtitle {
-        font-size: 1.2rem;
-        color: var(--text-muted);
-        max-width: 600px;
+    .mobile-header p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        max-width: 280px;
         margin: 0 auto;
     }
 
-    .tabs-container {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        background: rgba(30, 41, 59, 0.5);
-        padding: 0.5rem;
-        border-radius: 16px;
-        width: fit-content;
-        margin-left: auto;
-        margin-right: auto;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        flex-wrap: wrap;
+    /* Mobile Tabs - Horizontal Scroll */
+    .mobile-tabs-container {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg-primary);
+        padding: 12px 0;
+        margin: 0 -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+        border-bottom: 1px solid var(--border);
     }
 
-    .tab-btn {
-        padding: 0.75rem 2rem;
-        border-radius: 12px;
-        border: none;
-        background: transparent;
-        color: var(--text-muted);
+    .mobile-tabs-scroll {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+
+    .mobile-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mobile-tab {
+        flex: 0 0 auto;
+        padding: 12px 20px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-size: 14px;
         font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        white-space: nowrap;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 8px;
     }
 
-    .tab-btn.active {
+    .mobile-tab.active {
         background: var(--primary);
         color: white;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    }
-
-    .tab-btn:hover:not(.active) {
-        color: white;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .matches-grid {
-        display: grid;
-        gap: 1.5rem;
-    }
-
-    .match-card-modern {
-        background: rgba(30, 41, 59, 0.6);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 1.5rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .match-card-modern:hover {
-        transform: translateY(-4px);
         border-color: var(--primary);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+
+    .mobile-tab i {
+        font-size: 16px;
+    }
+
+    /* Match Cards - Mobile Optimized */
+    .mobile-match-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0 32px;
+    }
+
+    /* Match Card */
+    .mobile-match-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        transition: all 0.2s ease;
+        position: relative;
+        user-select: none;
+    }
+
+    .mobile-match-card:active {
+        transform: translateY(-2px);
+        border-color: var(--primary);
+        box-shadow: var(--shadow);
+    }
+
+    /* Status Indicator */
+    .match-status-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
         background: rgba(30, 41, 59, 0.8);
+        border-bottom: 1px solid var(--border);
     }
 
-    .match-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .league-badge {
+    .league-info {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        background: rgba(255, 255, 255, 0.05);
-        padding: 0.4rem 1rem;
-        border-radius: 20px;
+        gap: 8px;
     }
 
-    .match-time {
-        color: var(--secondary);
-        font-weight: 600;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .teams-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .team-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex: 1;
-    }
-
-    .team-item.away {
-        flex-direction: row-reverse;
-        text-align: right;
-    }
-
-    .team-logo-wrapper {
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
-        background: rgba(15, 23, 42, 0.6);
-        padding: 8px;
+    .league-icon {
+        width: 20px;
+        height: 20px;
+        background: var(--primary);
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 12px;
     }
 
-    .team-logo-img {
+    .league-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-live {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        animation: pulse 2s infinite;
+    }
+
+    .status-upcoming {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary);
+    }
+
+    .status-finished {
+        background: rgba(148, 163, 184, 0.1);
+        color: var(--text-secondary);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Teams Section */
+    .teams-section {
+        padding: 20px 16px;
+    }
+
+    /* Team Row - Optimized for touch */
+    .team-row {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        transition: background 0.2s ease;
+        position: relative;
+    }
+
+    .team-row:active {
+        background: var(--bg-hover);
+    }
+
+    .team-logo {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-right: 12px;
+    }
+
+    .team-logo img {
         width: 100%;
         height: 100%;
         object-fit: contain;
+        padding: 6px;
     }
 
-    .team-name-text {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: white;
-    }
-
-    .vs-badge {
-        background: rgba(255, 255, 255, 0.05);
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+    .team-logo .logo-fallback {
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 16px;
         font-weight: 800;
-        color: var(--text-muted);
-        font-size: 0.8rem;
+        color: white;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     }
 
-    .odds-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-
-    .odds-box {
-        background: rgba(15, 23, 42, 0.4);
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .bookmaker-label {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .odds-values {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-
-    .odd-pill {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 0.5rem;
-        border-radius: 8px;
-        text-align: center;
+    .team-info {
         flex: 1;
-        transition: all 0.2s ease;
+        min-width: 0;
     }
 
-    .odd-pill:hover {
-        background: rgba(6, 214, 160, 0.1);
-        color: var(--secondary);
-    }
-
-    .odd-num {
+    .team-name {
+        font-size: 16px;
         font-weight: 700;
-        font-size: 1.1rem;
-        display: block;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .odd-type {
-        font-size: 0.7rem;
-        color: var(--text-muted);
+    .team-form {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .form-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .form-dot.win { background: var(--success); }
+    .form-dot.loss { background: var(--danger); }
+    .form-dot.draw { background: var(--warning); }
+
+    /* Team Odds/Scores */
+    .team-odds {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--primary);
+        min-width: 60px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .score {
+        font-size: 24px;
+        font-weight: 900;
+        color: white;
+        min-width: 60px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* VS Divider */
+    .vs-divider {
+        position: relative;
+        text-align: center;
+        padding: 8px 0;
+    }
+
+    .vs-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border);
+    }
+
+    .vs-text {
+        position: relative;
+        display: inline-block;
+        padding: 0 12px;
+        background: var(--bg-card);
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 700;
         text-transform: uppercase;
     }
 
-    /* Footer Info Styles */
-    .footer-info {
-        margin-top: 4rem;
-        padding-top: 2rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-        text-align: center;
-        color: var(--text-muted);
+    /* Odds Section - Horizontal Scroll */
+    .odds-section {
+        border-top: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.5);
+        padding: 16px;
     }
 
-    .footer-headline {
-        font-size: 1.5rem;
+    .odds-section h4 {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .odds-scroll {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+    }
+
+    .odds-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Odds Card */
+    .odds-card {
+        flex: 0 0 auto;
+        width: 100%;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .odds-card:active {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .bookmaker-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .bookmaker-name {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .bookmaker-name i {
+        color: var(--primary);
+    }
+
+    /* Odds Grid */
+    .odds-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .odd-button {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px 8px;
+        text-align: center;
+        transition: all 0.2s ease;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .odd-button:active {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: var(--primary);
+    }
+
+    .odd-value {
+        font-size: 18px;
         font-weight: 800;
         color: white;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        margin-bottom: 4px;
+        font-variant-numeric: tabular-nums;
     }
 
-    @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.5rem;
+    .odd-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        border: 2px dashed var(--border);
+        margin-top: 20px;
+    }
+
+    .empty-icon {
+        font-size: 48px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    .empty-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .empty-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    /* Footer */
+    .mobile-footer {
+        text-align: center;
+        padding: 24px 16px;
+        border-top: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    /* Tablet & Desktop Adjustments */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 720px;
+            padding: 0 24px;
         }
 
-        .teams-container {
-            flex-direction: column;
-            gap: 1rem;
+        .mobile-tabs-scroll {
+            justify-content: center;
         }
 
-        .team-item {
+        .mobile-tab {
+            min-width: 120px;
+        }
+
+        .mobile-match-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .odds-card {
             width: 100%;
-            justify-content: flex-start;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .mobile-container {
+            max-width: 1200px;
         }
 
-        .team-item.away {
-            flex-direction: row;
-            text-align: left;
+        .mobile-match-cards {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
         }
 
-        .vs-badge {
-            display: none;
+        .mobile-header h1 {
+            font-size: 32px;
+        }
+
+        .mobile-header p {
+            font-size: 16px;
+            max-width: 400px;
+        }
+    }
+
+    /* Performance Optimizations */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
         }
     }
 </style>
 
-<div class="dashboard-container" x-data="{ activeTab: 'upcoming' }">
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <h1 class="hero-title">XStake Odds</h1>
-        <p class="hero-subtitle">Real-time football betting odds from top bookmakers. Compare, analyze, and win big.</p>
-    </div>
+<div class="mobile-container" x-data="{
+    activeTab: 'upcoming',
+    touchStartX: 0,
+    touchStartY: 0
+}" @touchstart="touchStartX = $event.touches[0].clientX; touchStartY = $event.touches[0].clientY"
+    @touchmove.prevent="
+        const touchEndX = $event.touches[0].clientX;
+        const touchEndY = $event.touches[0].clientY;
+        const diffX = touchStartX - touchEndX;
+        const diffY = touchStartY - touchEndY;
 
-    <!-- Navigation -->
-    <div class="tabs-container">
-        <button @click="activeTab = 'live'" class="tab-btn" :class="{ 'active': activeTab === 'live' }">
-            <i class="fas fa-bolt"></i> Live
-        </button>
-        <button @click="activeTab = 'today'" class="tab-btn" :class="{ 'active': activeTab === 'today' }">
-            <i class="fas fa-calendar-day"></i> Today
-        </button>
-        <button @click="activeTab = 'upcoming'" class="tab-btn" :class="{ 'active': activeTab === 'upcoming' }">
-            <i class="fas fa-calendar-alt"></i> Upcoming
-        </button>
-        <button @click="activeTab = 'finished'" class="tab-btn" :class="{ 'active': activeTab === 'finished' }">
-            <i class="fas fa-history"></i> Finished
-        </button>
+        // Only horizontal swipes with minimal vertical movement
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+            const tabs = ['upcoming', 'today', 'live', 'finished'];
+            const currentIndex = tabs.indexOf(activeTab);
+
+            if (diffX > 0 && currentIndex < tabs.length - 1) {
+                // Swipe left
+                activeTab = tabs[currentIndex + 1];
+            } else if (diffX < 0 && currentIndex > 0) {
+                // Swipe right
+                activeTab = tabs[currentIndex - 1];
+            }
+            touchStartX = touchEndX;
+        }
+    ">
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <h1>Live Matches</h1>
+        <p>Real-time odds and betting insights optimized for mobile</p>
+    </header>
+
+    <!-- Mobile Tabs -->
+    <div class="mobile-tabs-container">
+        <div class="mobile-tabs-scroll">
+            <button class="mobile-tab"
+                    :class="{ 'active': activeTab === 'live' }"
+                    @click="activeTab = 'live'">
+                <i class="fas fa-broadcast-tower"></i>
+                Live
+            </button>
+            <button class="mobile-tab"
+                    :class="{ 'active': activeTab === 'today' }"
+                    @click="activeTab = 'today'">
+                <i class="fas fa-calendar-day"></i>
+                Today
+            </button>
+            <button class="mobile-tab"
+                    :class="{ 'active': activeTab === 'upcoming' }"
+                    @click="activeTab = 'upcoming'">
+                <i class="fas fa-clock"></i>
+                Upcoming
+            </button>
+            <button class="mobile-tab"
+                    :class="{ 'active': activeTab === 'finished' }"
+                    @click="activeTab = 'finished'">
+                <i class="fas fa-check-circle"></i>
+                Finished
+            </button>
+        </div>
     </div>
 
     <!-- Live Matches -->
-    <div x-show="activeTab === 'live'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
-        <div class="matches-grid">
+    <div x-show="activeTab === 'live'" x-transition style="display: none;">
+        <div class="mobile-match-cards">
             {% if live_matches %}
                 {% for match in live_matches %}
-                <div class="match-card-modern" onclick="window.location.href='{% url 'match_detail' match.id %}'">
-                    <div class="match-header">
-                        <div class="league-badge">
-                            <i class="fas fa-trophy"></i> {{ match.league }}
+                <div class="mobile-match-card" @click="window.location.href='{% url 'match_detail' match.id %}'">
+                    <div class="match-status-mobile">
+                        <div class="league-info">
+                            <div class="league-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <span class="league-name">{{ match.league|truncatechars:20 }}</span>
                         </div>
-                        <div class="match-time" style="color: #ef4444; animation: pulse 2s infinite;">
-                            <i class="fas fa-circle" style="font-size: 0.6rem;"></i> LIVE
+                        <div class="status-badge status-live">
+                            <i class="fas fa-circle"></i> LIVE
                         </div>
                     </div>
 
-                    <div class="teams-container">
-                        <div class="team-item home">
-                            <div class="team-logo-wrapper">
+                    <div class="teams-section">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.home_team.logo_url %}
-                                    <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.home_team.logo_url }}"
+                                         alt="{{ match.home_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.home_team.logo_url %}display: none;{% endif %}">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
-                                {% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.home_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.home_team.name }}</div>
+                                <div class="team-form">
+                                    <div class="form-dot win"></div>
+                                    <div class="form-dot draw"></div>
+                                    <div class="form-dot win"></div>
+                                </div>
+                            </div>
+                            <div class="score">{{ match.home_score|default:"0" }}</div>
                         </div>
 
-                        <div class="vs-badge" style="background: #ef4444; color: white;">
-                            {% if match.home_score is not None %}{{ match.home_score }} - {{ match.away_score }}{% else %}VS{% endif %}
+                        <div class="vs-divider">
+                            <span class="vs-text">Live Score</span>
                         </div>
 
-                        <div class="team-item away">
-                            <div class="team-logo-wrapper">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.away_team.logo_url %}
-                                    <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.away_team.logo_url }}"
+                                         alt="{{ match.away_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.away_team.logo_url %}display: none;{% endif %}">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.away_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.away_team.name }}</div>
+                                <div class="team-form">
+                                    <div class="form-dot loss"></div>
+                                    <div class="form-dot win"></div>
+                                    <div class="form-dot draw"></div>
+                                </div>
+                            </div>
+                            <div class="score">{{ match.away_score|default:"0" }}</div>
                         </div>
                     </div>
 
-                    <div class="odds-container">
-                        {% for odds in match.odds.all|slice:":3" %}
-                        <div class="odds-box">
-                            <div class="bookmaker-label">
-                                <i class="fas fa-coins"></i> {{ odds.bookmaker.name }}
+                    {% if match.odds.all %}
+                    <div class="odds-section">
+                        <h4><i class="fas fa-chart-line"></i> Live Odds</h4>
+                        <div class="odds-scroll">
+                            {% for odds in match.odds.all|slice:":3" %}
+                            <div class="odds-card">
+                                <div class="bookmaker-header">
+                                    <div class="bookmaker-name">
+                                        <i class="fas fa-star"></i>
+                                        {{ odds.bookmaker.name }}
+                                    </div>
+                                </div>
+                                <div class="odds-grid">
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.home_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Home</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.draw_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Draw</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.away_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Away</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="odds-values">
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.home_odds }}</span>
-                                    <span class="odd-type">1</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.draw_odds }}</span>
-                                    <span class="odd-type">X</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.away_odds }}</span>
-                                    <span class="odd-type">2</span>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-                    <i class="fas fa-satellite-dish" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <h3>No live matches right now</h3>
-                    <p>Check "Today" or "Upcoming" for scheduled games</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <h3 class="empty-title">No Live Matches</h3>
+                    <p class="empty-text">Check back soon for live action. Browse upcoming matches while you wait.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Today's Matches -->
-    <div x-show="activeTab === 'today'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
-        <div class="matches-grid">
+    <div x-show="activeTab === 'today'" x-transition style="display: none;">
+        <div class="mobile-match-cards">
             {% if today_matches %}
                 {% for match in today_matches %}
-                <div class="match-card-modern" onclick="window.location.href='{% url 'match_detail' match.id %}'">
-                    <div class="match-header">
-                        <div class="league-badge">
-                            <i class="fas fa-trophy"></i> {{ match.league }}
+                <div class="mobile-match-card" @click="window.location.href='{% url 'match_detail' match.id %}'">
+                    <div class="match-status-mobile">
+                        <div class="league-info">
+                            <div class="league-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <span class="league-name">{{ match.league|truncatechars:20 }}</span>
                         </div>
-                        <div class="match-time">
-                            <i class="fas fa-clock"></i> {{ match.match_date|time }}
+                        <div class="status-badge status-upcoming">
+                            {{ match.match_date|time:"H:i" }}
                         </div>
                     </div>
 
-                    <div class="teams-container">
-                        <div class="team-item home">
-                            <div class="team-logo-wrapper">
+                    <div class="teams-section">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.home_team.logo_url %}
-                                    <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.home_team.logo_url }}"
+                                         alt="{{ match.home_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.home_team.logo_url %}display: none;{% endif %}">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.home_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.home_team.name }}</div>
+                            </div>
+                            <div class="team-odds">{{ match.odds.first.home_odds|default:"-"|floatformat:2 }}</div>
                         </div>
 
-                        <div class="vs-badge">VS</div>
+                        <div class="vs-divider">
+                            <span class="vs-text">Starts Soon</span>
+                        </div>
 
-                        <div class="team-item away">
-                            <div class="team-logo-wrapper">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.away_team.logo_url %}
-                                    <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.away_team.logo_url }}"
+                                         alt="{{ match.away_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.away_team.logo_url %}display: none;{% endif %}">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.away_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.away_team.name }}</div>
+                            </div>
+                            <div class="team-odds">{{ match.odds.first.away_odds|default:"-"|floatformat:2 }}</div>
                         </div>
                     </div>
 
-                    <div class="odds-container">
-                        {% for odds in match.odds.all|slice:":3" %}
-                        <div class="odds-box">
-                            <div class="bookmaker-label">
-                                <i class="fas fa-coins"></i> {{ odds.bookmaker.name }}
+                    {% if match.odds.all %}
+                    <div class="odds-section">
+                        <h4><i class="fas fa-chart-line"></i> Best Odds</h4>
+                        <div class="odds-scroll">
+                            {% for odds in match.odds.all|slice:":2" %}
+                            <div class="odds-card">
+                                <div class="bookmaker-header">
+                                    <div class="bookmaker-name">
+                                        <i class="fas fa-star"></i>
+                                        {{ odds.bookmaker.name }}
+                                    </div>
+                                </div>
+                                <div class="odds-grid">
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.home_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Home</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.draw_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Draw</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.away_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Away</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="odds-values">
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.home_odds }}</span>
-                                    <span class="odd-type">1</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.draw_odds }}</span>
-                                    <span class="odd-type">X</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.away_odds }}</span>
-                                    <span class="odd-type">2</span>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-                    <i class="fas fa-futbol" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <h3>No matches today</h3>
-                    <p>Check back later for today's fixtures</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <h3 class="empty-title">No Matches Today</h3>
+                    <p class="empty-text">Check upcoming matches for future fixtures.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Upcoming Matches -->
-    <div x-show="activeTab === 'upcoming'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-        <div class="matches-grid">
+    <div x-show="activeTab === 'upcoming'" x-transition>
+        <div class="mobile-match-cards">
             {% if upcoming_matches %}
                 {% for match in upcoming_matches %}
-                <div class="match-card-modern" onclick="window.location.href='{% url 'match_detail' match.id %}'">
-                    <div class="match-header">
-                        <div class="league-badge">
-                            <i class="fas fa-trophy"></i> {{ match.league }}
+                <div class="mobile-match-card" @click="window.location.href='{% url 'match_detail' match.id %}'">
+                    <div class="match-status-mobile">
+                        <div class="league-info">
+                            <div class="league-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <span class="league-name">{{ match.league|truncatechars:20 }}</span>
                         </div>
-                        <div class="match-time">
-                            <i class="fas fa-calendar-day"></i> {{ match.match_date|date:"M d, H:i" }}
+                        <div class="status-badge status-upcoming">
+                            {{ match.match_date|date:"M d, H:i" }}
                         </div>
                     </div>
 
-                    <div class="teams-container">
-                        <div class="team-item home">
-                            <div class="team-logo-wrapper">
+                    <div class="teams-section">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.home_team.logo_url %}
-                                    <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.home_team.logo_url }}"
+                                         alt="{{ match.home_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.home_team.logo_url %}display: none;{% endif %}">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.home_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.home_team.name }}</div>
+                            </div>
+                            <div class="team-odds">{{ match.odds.first.home_odds|default:"-"|floatformat:2 }}</div>
                         </div>
 
-                        <div class="vs-badge">VS</div>
+                        <div class="vs-divider">
+                            <span class="vs-text">VS</span>
+                        </div>
 
-                        <div class="team-item away">
-                            <div class="team-logo-wrapper">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.away_team.logo_url %}
-                                    <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.away_team.logo_url }}"
+                                         alt="{{ match.away_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.away_team.logo_url %}display: none;{% endif %}">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.away_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.away_team.name }}</div>
+                            </div>
+                            <div class="team-odds">{{ match.odds.first.away_odds|default:"-"|floatformat:2 }}</div>
                         </div>
                     </div>
 
                     {% if match.odds.all %}
-                    <div class="odds-container">
-                        {% for odds in match.odds.all|slice:":3" %}
-                        <div class="odds-box">
-                            <div class="bookmaker-label">
-                                <i class="fas fa-coins"></i> {{ odds.bookmaker.name }}
+                    <div class="odds-section">
+                        <h4><i class="fas fa-chart-line"></i> Available Odds</h4>
+                        <div class="odds-scroll">
+                            {% for odds in match.odds.all|slice:":3" %}
+                            <div class="odds-card">
+                                <div class="bookmaker-header">
+                                    <div class="bookmaker-name">
+                                        <i class="fas fa-star"></i>
+                                        {{ odds.bookmaker.name }}
+                                    </div>
+                                </div>
+                                <div class="odds-grid">
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.home_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Home</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.draw_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Draw</span>
+                                    </div>
+                                    <div class="odd-button">
+                                        <span class="odd-value">{{ odds.away_odds|floatformat:2 }}</span>
+                                        <span class="odd-label">Away</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="odds-values">
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.home_odds }}</span>
-                                    <span class="odd-type">1</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.draw_odds }}</span>
-                                    <span class="odd-type">X</span>
-                                </div>
-                                <div class="odd-pill">
-                                    <span class="odd-num">{{ odds.away_odds }}</span>
-                                    <span class="odd-type">2</span>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                     {% else %}
-                    <div style="text-align: center; padding: 1rem; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 12px;">
-                        <i class="fas fa-clock"></i> Odds coming soon
+                    <div class="odds-section">
+                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            <i class="fas fa-clock" style="font-size: 24px; margin-bottom: 8px;"></i>
+                            <p style="font-size: 14px; font-weight: 600;">Odds coming soon</p>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-                    <i class="fas fa-calendar-plus" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <h3>No upcoming matches</h3>
-                    <p>Matches will appear here as they're scheduled</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <h3 class="empty-title">No Upcoming Matches</h3>
+                    <p class="empty-text">New fixtures will be added when scheduled.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Finished Matches -->
-    <div x-show="activeTab === 'finished'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="display: none;">
-        <div class="matches-grid">
+    <div x-show="activeTab === 'finished'" x-transition style="display: none;">
+        <div class="mobile-match-cards">
             {% if finished_matches %}
                 {% for match in finished_matches %}
-                <div class="match-card-modern" onclick="window.location.href='{% url 'match_detail' match.id %}'" style="opacity: 0.8;">
-                    <div class="match-header">
-                        <div class="league-badge">
-                            <i class="fas fa-trophy"></i> {{ match.league }}
+                <div class="mobile-match-card" @click="window.location.href='{% url 'match_detail' match.id %}'">
+                    <div class="match-status-mobile">
+                        <div class="league-info">
+                            <div class="league-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <span class="league-name">{{ match.league|truncatechars:20 }}</span>
                         </div>
-                        <div class="match-time" style="color: var(--text-muted);">
-                            <i class="fas fa-check-circle"></i> Finished
+                        <div class="status-badge status-finished">
+                            <i class="fas fa-check"></i> Final
                         </div>
                     </div>
 
-                    <div class="teams-container">
-                        <div class="team-item home">
-                            <div class="team-logo-wrapper">
+                    <div class="teams-section">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.home_team.logo_url %}
-                                    <img src="{{ match.home_team.logo_url }}" alt="{{ match.home_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.home_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.home_team.logo_url }}"
+                                         alt="{{ match.home_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.home_team.logo_url %}display: none;{% endif %}">
                                     {{ match.home_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.home_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.home_team.name }}</div>
+                            </div>
+                            <div class="score">{{ match.home_score|default:"0" }}</div>
                         </div>
 
-                        <div class="vs-badge" style="background: var(--primary); color: white;">
-                            {% if match.home_score is not None %}{{ match.home_score }} - {{ match.away_score }}{% else %}VS{% endif %}
+                        <div class="vs-divider">
+                            <span class="vs-text">Final Score</span>
                         </div>
 
-                        <div class="team-item away">
-                            <div class="team-logo-wrapper">
+                        <div class="team-row">
+                            <div class="team-logo">
                                 {% if match.away_team.logo_url %}
-                                    <img src="{{ match.away_team.logo_url }}" alt="{{ match.away_team.name }}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                {% else %}
-                                <div class="no-logo" style="{% if match.away_team.logo_url %}display: none;{% endif %} width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                    <img src="{{ match.away_team.logo_url }}"
+                                         alt="{{ match.away_team.name }}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                {% endif %}
+                                <div class="logo-fallback"
+                                     style="{% if match.away_team.logo_url %}display: none;{% endif %}">
                                     {{ match.away_team.name|slice:":2"|upper }}
                                 </div>
-{% endif %}
                             </div>
-                            <span class="team-name-text">{{ match.away_team.name }}</span>
+                            <div class="team-info">
+                                <div class="team-name">{{ match.away_team.name }}</div>
+                            </div>
+                            <div class="score">{{ match.away_score|default:"0" }}</div>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-                    <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <h3>No finished matches</h3>
-                    <p>Recent match results will appear here</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="empty-title">No Recent Matches</h3>
+                    <p class="empty-text">Finished match results will appear here.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Footer Info -->
-    <div class="footer-info">
-        <h2 class="footer-headline">CEO - LEMON</h2>
-        <p>&copy; {% now "Y" %} XStake. All rights reserved.</p>
-    </div>
+    <!-- Mobile Footer -->
+    <footer class="mobile-footer">
+        <p style="font-weight: 700; color: white; margin-bottom: 8px;">WhiteBet</p>
+        <p style="margin-bottom: 8px;">Founder & CEO - LEMON</p>
+        <p style="font-size: 12px; opacity: 0.7;">&copy; {% now "Y" %} WhiteBet. All rights reserved.</p>
+    </footer>
 </div>
+
+<script>
+    // Mobile touch optimizations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add touch feedback for all interactive elements
+        const touchElements = document.querySelectorAll('.mobile-match-card, .mobile-tab, .odd-button');
+
+        touchElements.forEach(element => {
+            element.addEventListener('touchstart', function() {
+                this.style.transition = 'transform 0.1s ease';
+                this.style.transform = 'scale(0.98)';
+            });
+
+            element.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+                setTimeout(() => {
+                    this.style.transition = '';
+                }, 100);
+            });
+
+            element.addEventListener('touchcancel', function() {
+                this.style.transform = 'scale(1)';
+                this.style.transition = '';
+            });
+        });
+
+        // Prevent text selection on long press
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Optimize scroll performance
+        const scrollContainers = document.querySelectorAll('.odds-scroll, .mobile-tabs-scroll');
+        scrollContainers.forEach(container => {
+            container.style.webkitOverflowScrolling = 'touch';
+            container.style.overflowScrolling = 'touch';
+        });
+
+        // Lazy load images as they come into view
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.removeAttribute('data-src');
+                        }
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+    });
+</script>
 
 {% include 'includes/footer.html' %}

@@ -305,3 +305,35 @@ class Bet(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.match} - {self.amount} on {self.bet_type}"
+
+
+class ExpressBet(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_WON = 'won'
+    STATUS_LOST = 'lost'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_WON, 'Won'),
+        (STATUS_LOST, 'Lost'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='express_bets')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    total_odds = models.DecimalField(max_digits=10, decimal_places=2)
+    potential_payout = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Express Bet - {self.user.username} - {self.amount}"
+
+
+class ExpressBetSelection(models.Model):
+    express_bet = models.ForeignKey(ExpressBet, on_delete=models.CASCADE, related_name='selections')
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    bet_type = models.CharField(max_length=20)
+    odds = models.DecimalField(max_digits=6, decimal_places=2)
+    status = models.CharField(max_length=10, default='pending') # pending, won, lost
+
+    def __str__(self):
+        return f"{self.match} - {self.bet_type}"

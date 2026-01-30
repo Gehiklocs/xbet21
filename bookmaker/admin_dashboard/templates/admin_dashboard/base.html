@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhiteBet Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        primary: '#6366f1',
+                        secondary: '#06d6a0',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; }
+        .sidebar-link { transition: all 0.3s; }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(99, 102, 241, 0.1); color: #6366f1; border-right: 3px solid #6366f1; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-teal-400">
+                WhiteBet Admin
+            </h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4">
+            <div class="px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Main</div>
+            <a href="{% url 'admin_home' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'home' %}active{% endif %}">
+                <i class="fas fa-chart-pie w-6"></i> Dashboard
+            </a>
+
+            <div class="px-4 mt-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Management</div>
+            <a href="{% url 'admin_matches' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'matches' %}active{% endif %}">
+                <i class="fas fa-futbol w-6"></i> Matches
+            </a>
+            <a href="{% url 'admin_users' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'users' %}active{% endif %}">
+                <i class="fas fa-users w-6"></i> Users
+            </a>
+            <a href="{% url 'admin_bets' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'bets' %}active{% endif %}">
+                <i class="fas fa-ticket-alt w-6"></i> Bets
+            </a>
+            <a href="{% url 'admin_express_bets' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'express_bets' %}active{% endif %}">
+                <i class="fas fa-layer-group w-6"></i> Express Bets
+            </a>
+            <a href="{% url 'admin_transactions' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'transactions' %}active{% endif %}">
+                <i class="fas fa-exchange-alt w-6"></i> Transactions
+            </a>
+
+            <div class="px-4 mt-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">System</div>
+            <a href="{% url 'admin_scraper' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'scraper' %}active{% endif %}">
+                <i class="fas fa-robot w-6"></i> Scraper Control
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <a href="/" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-semibold transition">
+                View Site
+            </a>
+            <a href="/admin/logout/" class="flex items-center justify-center w-full py-2 mt-2 text-red-400 hover:bg-red-900/20 rounded-lg text-sm font-semibold transition">
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-950 p-8">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

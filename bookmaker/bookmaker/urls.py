@@ -22,6 +22,7 @@ from django.shortcuts import render
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('dashboard/', include('admin_dashboard.urls')), # Custom Admin Dashboard
     path('', include('matches.urls')),
     path('accounts/', include('accounts.urls')),
 ]

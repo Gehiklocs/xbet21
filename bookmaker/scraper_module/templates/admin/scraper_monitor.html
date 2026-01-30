@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="padding: 20px;">
+    <h1>Scraper Monitor</h1>
+
+    <div style="margin-bottom: 20px;">
+        Status:
+        <span id="status-indicator" style="font-weight: bold; color: {% if status.is_running %}green{% else %}red{% endif %};">
+            {% if status.is_running %}RUNNING{% else %}STOPPED{% endif %}
+        </span>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button onclick="toggleScraper('start')" class="button" style="background: green;">Start Monitor</button>
+        <button onclick="toggleScraper('stop')" class="button" style="background: red;">Stop Monitor</button>
+    </div>
+
+    <div style="background: #000; color: #0f0; padding: 15px; height: 500px; overflow-y: scroll; font-family: monospace; white-space: pre-wrap;" id="log-container">
+{{ status.logs }}
+    </div>
+
+    <script>
+        function toggleScraper(action) {
+            fetch(`/admin/scraper/control/${action}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(response => response.json()).then(data => {
+                if(data.status === 'ok') location.reload();
+                else alert(data.message);
+            });
+        }
+
+        // Auto-refresh logs every 3 seconds
+        setInterval(() => {
+            // Ideally fetch just logs, but reload is simpler for now
+            location.reload();
+        }, 3000);
+
+        // Scroll to bottom
+        const container = document.getElementById('log-container');
+        container.scrollTop = container.scrollHeight;
+    </script>
+</div>
+{% endblock %}

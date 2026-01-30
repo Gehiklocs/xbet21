@@ -3,7 +3,8 @@ import requests
 from django.http import JsonResponse
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Match, Odds, Bookmaker, Team, Bet
+from .models import Match, Odds, Bookmaker, Team, Bet, ExpressBet, ExpressBetSelection
+from accounts.models import Profile
 from django.db.models import Prefetch, Sum, Q
 from accounts.services.telegram_notifier import notify_site_visit
 from django.contrib.auth.decorators import login_required
@@ -205,25 +206,100 @@ def place_bet(request, match_id):
         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
 @login_required
+def place_express_bet(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        bets = data.get('bets', [])
+        stake = Decimal(str(data.get('stake', 0)))
+        is_express = data.get('is_express', False)
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if stake <= 0:
+        return JsonResponse({'error': 'Stake must be positive'}, status=400)
+
+    if not bets:
+        return JsonResponse({'error': 'No bets selected'}, status=400)
+
+    try:
+        with transaction.atomic():
+            profile = Profile.objects.select_for_update().get(user=request.user)
+
+            if profile.balance < stake:
+                return JsonResponse({'error': 'Insufficient balance'}, status=400)
+
+            # Calculate total odds
+            total_odds = Decimal('1.0')
+            selections = []
+
+            for bet_data in bets:
+                match_id = bet_data.get('match_id')
+                bet_type = bet_data.get('selection') # 'home', 'draw', '1x', etc.
+                odds_val = Decimal(str(bet_data.get('odds')))
+
+                match = Match.objects.get(id=match_id)
+
+                # Basic validation: check if match is bettable
+                if match.status == Match.STATUS_FINISHED:
+                    raise ValueError(f"Match {match} is finished")
+
+                total_odds *= odds_val
+                selections.append({
+                    'match': match,
+                    'bet_type': bet_type,
+                    'odds': odds_val
+                })
+
+            # Deduct balance
+            profile.balance -= stake
+            profile.save()
+
+            # Create Express Bet
+            potential_payout = stake * total_odds
+            express_bet = ExpressBet.objects.create(
+                user=request.user,
+                amount=stake,
+                total_odds=total_odds,
+                potential_payout=potential_payout
+            )
+
+            # Create Selections
+            for sel in selections:
+                ExpressBetSelection.objects.create(
+                    express_bet=express_bet,
+                    match=sel['match'],
+                    bet_type=sel['bet_type'],
+                    odds=sel['odds']
+                )
+
+            return JsonResponse({
+                'success': True,
+                'new_balance': float(profile.balance),
+                'message': 'Express bet placed successfully!'
+            })
+
+    except Match.DoesNotExist:
+        return JsonResponse({'error': 'One or more matches not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+
+@login_required
 def my_bets(request):
     """View to display user's betting history"""
     bets = Bet.objects.filter(user=request.user).select_related('match', 'match__home_team', 'match__away_team').order_by('-created_at')
+    express_bets = ExpressBet.objects.filter(user=request.user).prefetch_related('selections__match').order_by('-created_at')
 
-    # Calculate stats
-    total_bets = bets.count()
-    won_bets = bets.filter(status=Bet.STATUS_WON).count()
-    pending_bets = bets.filter(status=Bet.STATUS_PENDING).count()
-
-    # Calculate total profit/loss
-    total_wagered = bets.aggregate(Sum('amount'))['amount__sum'] or 0
-    total_payout = bets.filter(status=Bet.STATUS_WON).aggregate(Sum('potential_payout'))['potential_payout__sum'] or 0
-    net_profit = total_payout - total_wagered
+    # Calculate stats (simplified for now)
+    total_bets = bets.count() + express_bets.count()
 
     context = {
         'bets': bets,
+        'express_bets': express_bets,
         'total_bets': total_bets,
-        'won_bets': won_bets,
-        'pending_bets': pending_bets,
-        'net_profit': net_profit,
     }
     return render(request, 'matches/my_bets.html', context)

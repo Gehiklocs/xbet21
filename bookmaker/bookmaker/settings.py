@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'matches',
     'scraper_module',
     'accounts',
+    'admin_dashboard', # New custom admin app
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'bookmaker.middleware.IPWhitelistMiddleware', # Custom IP Whitelist Middleware
 ]
 
 ROOT_URLCONF = 'bookmaker.urls'
@@ -216,3 +218,8 @@ USE_X_FORWARDED_PORT = True
 # SECURE_HSTS_SECONDS = 31536000
 # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 # SECURE_HSTS_PRELOAD = True
+
+# IP Whitelist
+# Add your IP here. Use '*' to allow all (disable whitelist).
+# Example: ['127.0.0.1', '192.168.1.100']
+ALLOWED_IPS = os.getenv('ALLOWED_IPS', '127.0.0.1').split(',')

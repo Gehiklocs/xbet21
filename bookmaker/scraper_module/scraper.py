@@ -138,6 +138,344 @@ class XStakeScraper:
         except Exception:
             return []
 
+    async def monitor_main_list_persistent(self, status_check_callback=None, log_callback=None):
+        """
+        Persistently monitors the main match list page (gstake.net/line/201).
+        Keeps the browser open and scrapes data every 5 seconds.
+        
+        Args:
+            status_check_callback (callable): Async function that returns True if scraping should continue.
+            log_callback (callable): Function to handle log messages.
+        """
+        def log(msg):
+            if log_callback:
+                log_callback(msg)
+            else:
+                print(msg)
+
+        url = "https://gstake.net/line/201"
+        log(f"🟢 Opening persistent connection to Main List: {url}")
+        
+        try:
+            if not self.page:
+                await self.setup_driver()
+                
+            await self.page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            log("   ✅ Page loaded. Waiting for dynamic content...")
+            
+            try:
+                await self.page.wait_for_selector(".accordion.league-wrap", timeout=15000)
+            except:
+                log("   ⚠️ Timeout waiting for league selector, proceeding anyway...")
+
+            heartbeat = 0
+
+            while True:
+                # Check if we should stop
+                if status_check_callback:
+                    should_continue = await status_check_callback()
+                    if not should_continue:
+                        log("🛑 Stop signal received. Exiting monitor loop.")
+                        break
+
+                # Extract ALL match data from the page using JS
+                scraped_data = await self.page.evaluate("""() => {
+                    const matches = [];
+                    const leagues = document.querySelectorAll('.accordion.league-wrap, .league-wrap');
+                    
+                    leagues.forEach(league => {
+                        let leagueName = "Unknown";
+                        const titleEl = league.querySelector('.icon-title__text');
+                        if (titleEl) leagueName = titleEl.innerText.trim();
+                        
+                        const events = league.querySelectorAll('.event');
+                        
+                        events.forEach(event => {
+                            const match = {
+                                league_name: leagueName,
+                                match_url: null,
+                                raw_date: "",
+                                raw_time: "",
+                                home_team: "",
+                                away_team: "",
+                                home_odds: null,
+                                draw_odds: null,
+                                away_odds: null,
+                                markets: []
+                            };
+                            
+                            const link = event.querySelector('a.event__link') || event.querySelector('a');
+                            if (link) {
+                                const href = link.getAttribute('href');
+                                match.match_url = href.startsWith('http') ? href : 'https://gstake.net' + (href.startsWith('/') ? href : '/' + href);
+                            }
+                            
+                            const timeEl = event.querySelector('.time__hours');
+                            const dateEl = event.querySelector('.time__date');
+                            if (timeEl) match.raw_time = timeEl.innerText.trim();
+                            if (dateEl) match.raw_date = dateEl.innerText.trim();
+                            
+                            const opps = event.querySelectorAll('.opps__container .icon-title__text');
+                            if (opps.length >= 2) {
+                                match.home_team = opps[0].innerText.trim();
+                                match.away_team = opps[1].innerText.trim();
+                            } else {
+                                const teams = event.querySelectorAll('.icon-title__text');
+                                if (teams.length >= 2) {
+                                    match.home_team = teams[0].innerText.trim();
+                                    match.away_team = teams[1].innerText.trim();
+                                }
+                            }
+                            
+                            const oddsContainer = event.querySelector('.odds');
+                            if (oddsContainer) {
+                                const buttons = oddsContainer.querySelectorAll('.stake-button');
+                                if (buttons.length >= 3) {
+                                    const h = buttons[0].querySelector('.formated-odd');
+                                    const d = buttons[1].querySelector('.formated-odd');
+                                    const a = buttons[2].querySelector('.formated-odd');
+                                    
+                                    if (h) match.home_odds = h.innerText.trim();
+                                    if (d) match.draw_odds = d.innerText.trim();
+                                    if (a) match.away_odds = a.innerText.trim();
+                                }
+                            }
+                            
+                            if (match.home_team && match.away_team) {
+                                matches.push(match);
+                            }
+                        });
+                    });
+                    return matches;
+                }""")
+
+                if scraped_data:
+                    log(f"\n   📥 Extracted {len(scraped_data)} matches. Processing...")
+                    
+                    processed_data = []
+                    for m in scraped_data:
+                        # Log match details
+                        log(f"      ⚽ {m['home_team']} vs {m['away_team']} ({m['league_name']})")
+                        log(f"         🕒 {m['raw_time']} | Odds: 1: {m['home_odds']} | X: {m['draw_odds']} | 2: {m['away_odds']}")
+
+                        try: m['home_odds'] = float(m['home_odds']) if m['home_odds'] else None
+                        except: m['home_odds'] = None
+                        try: m['draw_odds'] = float(m['draw_odds']) if m['draw_odds'] else None
+                        except: m['draw_odds'] = None
+                        try: m['away_odds'] = float(m['away_odds']) if m['away_odds'] else None
+                        except: m['away_odds'] = None
+                        
+                        try:
+                            if m['raw_date'] and m['raw_time']:
+                                day, month = map(int, m['raw_date'].split('.'))
+                                hour, minute = map(int, m['raw_time'].split(':'))
+                                year = datetime.now().year
+                                dt = datetime(year, month, day, hour, minute)
+                                m['match_datetime'] = timezone.make_aware(dt)
+                            else:
+                                m['match_datetime'] = timezone.now()
+                        except:
+                            m['match_datetime'] = timezone.now()
+
+                        processed_data.append(m)
+
+                    await bulk_save_scraped_data(processed_data)
+                    log(f"   💾 Saved {len(processed_data)} matches to DB.")
+
+                else:
+                    log("   ⚠️ No matches found on page.")
+
+                heartbeat += 1
+                if heartbeat >= 6:
+                    log("   💓 Monitor active...")
+                    heartbeat = 0
+
+                await asyncio.sleep(5)
+
+        except Exception as e:
+            log(f"   ❌ Error monitoring main list: {e}")
+            # Don't close page here, let the loop or caller handle it, or retry
+            # await self.page.close() 
+
+    async def scrape_match_detail_page(self, match_url):
+        """
+        Scrapes all odds from a specific match detail page.
+        Returns a dictionary with all found markets and odds.
+        """
+        try:
+            print(f"🔍 Visiting: {match_url}")
+            await self.page.goto(match_url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(2)  # Wait for dynamic content
+
+            # Extract Match Info (Score, Time)
+            score_text = ""
+            try:
+                score_el = await self.page.query_selector('.score') or await self.page.query_selector('.match-score')
+                if score_el:
+                    score_text = (await score_el.inner_text()).strip()
+            except: pass
+
+            print(f"   📊 Score: {score_text if score_text else 'Not started/No score'}")
+
+            # Extract All Markets
+            markets_data = {}
+            
+            # Look for market containers (often accordions or blocks)
+            # Adjust selectors based on actual site structure
+            market_containers = await self.page.query_selector_all('.accordion-stake')
+            if not market_containers:
+                market_containers = await self.page.query_selector_all('.market-group') # Fallback
+
+            for container in market_containers:
+                try:
+                    # Get Market Name
+                    title_el = await container.query_selector('.accordion__header') or await container.query_selector('.market-title')
+                    if not title_el: continue
+                    market_name = (await title_el.inner_text()).strip()
+                    
+                    if market_name not in markets_data:
+                        markets_data[market_name] = []
+
+                    # Get Outcomes
+                    buttons = await container.query_selector_all('.stake-button')
+                    for btn in buttons:
+                        name_el = await btn.query_selector('.stake__title')
+                        odd_el = await btn.query_selector('.formated-odd')
+                        
+                        if name_el and odd_el:
+                            outcome_name = (await name_el.inner_text()).strip()
+                            odd_val = (await odd_el.inner_text()).strip()
+                            markets_data[market_name].append(f"{outcome_name}: {odd_val}")
+                except Exception: continue
+
+            return markets_data
+
+        except Exception as e:
+            print(f"   ❌ Error scraping detail page: {e}")
+            return {}
+
+    async def update_specific_matches(self, matches_queryset):
+        """
+        Task 2: Simplified update task.
+        """
+        try:
+            print(f"🚀 Starting Detail Update for {len(matches_queryset)} matches...")
+            
+            matches_list = []
+            async for m in matches_queryset:
+                matches_list.append(m)
+
+            for match in tqdm(matches_list, desc="Recalculating Derived Odds", unit="match"):
+                await calculate_and_save_derived_odds(match)
+            
+            print("✅ Detail update complete (derived odds recalculated).")
+            return True
+
+        except Exception as e:
+            print(f"💥 Detail update error: {e}")
+            return False
+        finally:
+            pass
+
+    async def update_live_matches(self, matches_queryset):
+        """
+        Task 4: Visits match pages to check for live scores and status updates.
+        """
+        try:
+            print("🚀 Starting Live Match Monitoring...")
+            if not await self.setup_driver():
+                return False
+            
+            matches_list = []
+            async for m in matches_queryset:
+                matches_list.append(m)
+            
+            for match in matches_list:
+                if not match.match_url:
+                    continue
+                    
+                print(f"🔴 Checking Live: {match.home_team} vs {match.away_team}")
+                await self.scrape_match_status_score(match)
+                
+            print("✅ Live monitoring complete.")
+            return True
+            
+        except Exception as e:
+            print(f"💥 Live monitoring error: {e}")
+            return False
+        finally:
+            await self.cleanup()
+
+    async def scrape_match_status_score(self, match):
+        """
+        Navigates to the match page and extracts score/status.
+        Improved robustness for score parsing.
+        """
+        try:
+            await self.page.goto(match.match_url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(3) # Wait for dynamic score updates
+            
+            home_score = None
+            away_score = None
+            status = None
+            
+            # 1. Try multiple selectors for score
+            score_selectors = [
+                '.score', '.match-score', '.event__score', 
+                '.live-score', '.scoreboard', '[class*="score"]'
+            ]
+            
+            score_text = ""
+            for selector in score_selectors:
+                try:
+                    el = await self.page.query_selector(selector)
+                    if el:
+                        score_text = (await el.inner_text()).strip()
+                        if score_text and (':' in score_text or '-' in score_text):
+                            break
+                except: continue
+
+            # 2. Robust Score Parsing
+            if score_text:
+                # Remove any non-digit/separator chars
+                clean_score = re.sub(r'[^\d:-]', '', score_text)
+                parts = re.split(r'[-:]', clean_score)
+                
+                if len(parts) >= 2:
+                    try:
+                        h_s = int(parts[0].strip())
+                        a_s = int(parts[1].strip())
+                        # Sanity check: scores shouldn't be absurdly high (e.g. 2024)
+                        if 0 <= h_s < 50 and 0 <= a_s < 50:
+                            home_score = h_s
+                            away_score = a_s
+                    except ValueError: pass
+
+            # 3. Check Status (Finished/Live)
+            content_text = await self.page.content()
+            content_lower = content_text.lower()
+            
+            finished_keywords = ["full time", "finished", "ft", "ended", "final result"]
+            if any(k in content_lower for k in finished_keywords):
+                status = Match.STATUS_FINISHED
+            elif home_score is not None:
+                status = Match.STATUS_LIVE
+            
+            # 4. Update DB safely
+            if home_score is not None and away_score is not None:
+                await update_match_score_status(match, home_score, away_score, status)
+                print(f"   📝 Updated: {home_score} - {away_score} ({status or 'Live'})")
+            elif status == Match.STATUS_FINISHED:
+                await update_match_status(match, status)
+                print(f"   🏁 Match Finished (Score not found/changed)")
+                
+        except Exception as e:
+            print(f"   ⚠️ Failed to update score: {e}")
+
+    # Deprecated method kept for compatibility
+    async def scrape_matches(self, reuse_driver=False):
+        return await self.scrape_main_list_only()
+
     async def scrape_main_list_only(self):
         """
         Task 1: Scrapes the main page to get leagues and match lists, including all detailed odds.
@@ -289,128 +627,6 @@ class XStakeScraper:
             return False
         finally:
             await self.cleanup()
-
-    async def update_specific_matches(self, matches_queryset):
-        """
-        Task 2: Simplified update task.
-        """
-        try:
-            print(f"🚀 Starting Detail Update for {len(matches_queryset)} matches...")
-            
-            matches_list = []
-            async for m in matches_queryset:
-                matches_list.append(m)
-
-            for match in tqdm(matches_list, desc="Recalculating Derived Odds", unit="match"):
-                await calculate_and_save_derived_odds(match)
-            
-            print("✅ Detail update complete (derived odds recalculated).")
-            return True
-
-        except Exception as e:
-            print(f"💥 Detail update error: {e}")
-            return False
-        finally:
-            pass
-
-    async def update_live_matches(self, matches_queryset):
-        """
-        Task 4: Visits match pages to check for live scores and status updates.
-        """
-        try:
-            print("🚀 Starting Live Match Monitoring...")
-            if not await self.setup_driver():
-                return False
-            
-            matches_list = []
-            async for m in matches_queryset:
-                matches_list.append(m)
-            
-            for match in matches_list:
-                if not match.match_url:
-                    continue
-                    
-                print(f"🔴 Checking Live: {match.home_team} vs {match.away_team}")
-                await self.scrape_match_status_score(match)
-                
-            print("✅ Live monitoring complete.")
-            return True
-            
-        except Exception as e:
-            print(f"💥 Live monitoring error: {e}")
-            return False
-        finally:
-            await self.cleanup()
-
-    async def scrape_match_status_score(self, match):
-        """
-        Navigates to the match page and extracts score/status.
-        Improved robustness for score parsing.
-        """
-        try:
-            await self.page.goto(match.match_url, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(3) # Wait for dynamic score updates
-            
-            home_score = None
-            away_score = None
-            status = None
-            
-            # 1. Try multiple selectors for score
-            score_selectors = [
-                '.score', '.match-score', '.event__score', 
-                '.live-score', '.scoreboard', '[class*="score"]'
-            ]
-            
-            score_text = ""
-            for selector in score_selectors:
-                try:
-                    el = await self.page.query_selector(selector)
-                    if el:
-                        score_text = (await el.inner_text()).strip()
-                        if score_text and (':' in score_text or '-' in score_text):
-                            break
-                except: continue
-
-            # 2. Robust Score Parsing
-            if score_text:
-                # Remove any non-digit/separator chars
-                clean_score = re.sub(r'[^\d:-]', '', score_text)
-                parts = re.split(r'[-:]', clean_score)
-                
-                if len(parts) >= 2:
-                    try:
-                        h_s = int(parts[0].strip())
-                        a_s = int(parts[1].strip())
-                        # Sanity check: scores shouldn't be absurdly high (e.g. 2024)
-                        if 0 <= h_s < 50 and 0 <= a_s < 50:
-                            home_score = h_s
-                            away_score = a_s
-                    except ValueError: pass
-
-            # 3. Check Status (Finished/Live)
-            content_text = await self.page.content()
-            content_lower = content_text.lower()
-            
-            finished_keywords = ["full time", "finished", "ft", "ended", "final result"]
-            if any(k in content_lower for k in finished_keywords):
-                status = Match.STATUS_FINISHED
-            elif home_score is not None:
-                status = Match.STATUS_LIVE
-            
-            # 4. Update DB safely
-            if home_score is not None and away_score is not None:
-                await update_match_score_status(match, home_score, away_score, status)
-                print(f"   📝 Updated: {home_score} - {away_score} ({status or 'Live'})")
-            elif status == Match.STATUS_FINISHED:
-                await update_match_status(match, status)
-                print(f"   🏁 Match Finished (Score not found/changed)")
-                
-        except Exception as e:
-            print(f"   ⚠️ Failed to update score: {e}")
-
-    # Deprecated method kept for compatibility
-    async def scrape_matches(self, reuse_driver=False):
-        return await self.scrape_main_list_only()
 
 
 # ------------------------
