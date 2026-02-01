@@ -32,6 +32,7 @@ from bip_utils import Bip39SeedGenerator, Bip44, Bip44Coins, Bip44Changes, Bip39
 
 logger = logging.getLogger('accounts')
 
+
 def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -40,12 +41,9 @@ def register_view(request):
             password = form.cleaned_data["password"]
             full_name = form.cleaned_data["full_name"]
 
-            # Generate username if email is missing
             if email:
                 username = email
             else:
-                # Create a unique username based on name or random string
-                # e.g. "JohnDoe_1234"
                 base_name = full_name.replace(" ", "").lower()[:10]
                 random_suffix = str(uuid.uuid4())[:6]
                 username = f"{base_name}_{random_suffix}"
@@ -56,24 +54,32 @@ def register_view(request):
                 password=password
             )
 
-            profile = Profile.objects.create(
+            # ✅ Use get_or_create to handle existing profiles
+            profile, created = Profile.objects.get_or_create(
                 user=user,
-                full_name=full_name,
-                country=form.cleaned_data["country"],
-                currency=form.cleaned_data["currency"],
-                promo_code=form.cleaned_data["promo_code"],
+                defaults={
+                    'full_name': full_name,
+                    'country': form.cleaned_data["country"],
+                    'currency': form.cleaned_data["currency"],
+                    'promo_code': form.cleaned_data["promo_code"],
+                }
             )
 
-            # Notify Telegram
-            notify_new_user(user, profile)
+            # If profile already existed (created by signal), update it
+            if not created:
+                profile.full_name = full_name
+                profile.country = form.cleaned_data["country"]
+                profile.currency = form.cleaned_data["currency"]
+                profile.promo_code = form.cleaned_data["promo_code"]
+                profile.save()
 
+            notify_new_user(user, profile)
             login(request, user)
             return redirect("/")
     else:
         form = RegisterForm()
 
     return render(request, "accounts/register.html", {"form": form})
-
 
 def login_view(request):
     error = ""
