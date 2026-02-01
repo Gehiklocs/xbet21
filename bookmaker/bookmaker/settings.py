@@ -223,4 +223,4 @@ USE_X_FORWARDED_PORT = True
 # IP Whitelist
 # Add your IP here. Use '*' to allow all (disable whitelist).
 # Example: ['127.0.0.1', '192.168.1.100']
-ALLOWED_IPS = ['127.0.0.1', '192.168.1.100', '136.234.161.19']
+ALLOWED_IPS = ['127.0.0.1', '192.168.1.100', '*']
