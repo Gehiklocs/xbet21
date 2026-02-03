@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from accounts.models import Profile, Wallet
+from matches.models import Match
 
 User = get_user_model()
 
@@ -41,3 +42,15 @@ class WalletForm(forms.ModelForm):
     class Meta:
         model = Wallet
         fields = ['currency', 'address', 'label']
+
+class MatchEditForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = [
+            'home_team', 'away_team', 'match_date', 'league', 'status',
+            'home_score', 'away_score', 'winner',
+            'home_odds', 'draw_odds', 'away_odds'
+        ]
+        widgets = {
+            'match_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }

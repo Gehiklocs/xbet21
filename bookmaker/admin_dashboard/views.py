@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.core.paginator import Paginator
 from django.contrib import messages
 from matches.models import Match, Bet, ExpressBet
 from accounts.models import Profile, CryptoTransaction, Wallet
 from scraper_module.models import ScraperStatus
-from .forms import UserEditForm, WalletForm
+from .forms import UserEditForm, WalletForm, MatchEditForm
 
 User = get_user_model()
 
@@ -37,14 +37,80 @@ def dashboard_home(request):
 
 @user_passes_test(is_admin)
 def matches_list(request):
+    query = request.GET.get('q')
     matches_list = Match.objects.all().order_by('-match_date')
+    
+    if query:
+        matches_list = matches_list.filter(
+            Q(home_team__name__icontains=query) | 
+            Q(away_team__name__icontains=query) |
+            Q(league__icontains=query)
+        )
+    
     paginator = Paginator(matches_list, 20)
     page = request.GET.get('page')
     matches = paginator.get_page(page)
-    return render(request, 'admin_dashboard/matches.html', {'matches': matches, 'page': 'matches'})
+    return render(request, 'admin_dashboard/matches.html', {'matches': matches, 'page': 'matches', 'query': query})
+
+@user_passes_test(is_admin)
+def match_edit(request, match_id=None):
+    if match_id:
+        match = get_object_or_404(Match, id=match_id)
+        title = "Edit Match"
+    else:
+        match = None
+        title = "Add Match"
+
+    if request.method == 'POST':
+        form = MatchEditForm(request.POST, instance=match)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match saved successfully.")
+            return redirect('admin_matches')
+    else:
+        form = MatchEditForm(instance=match)
+
+    return render(request, 'admin_dashboard/match_edit.html', {'form': form, 'title': title, 'page': 'matches'})
+
+@user_passes_test(is_admin)
+def match_delete(request, match_id):
+    match = get_object_or_404(Match, id=match_id)
+    if request.method == 'POST':
+        match.delete()
+        messages.success(request, "Match deleted successfully.")
+        return redirect('admin_matches')
+    return render(request, 'admin_dashboard/confirm_delete.html', {'object': match, 'page': 'matches'})
 
 @user_passes_test(is_admin)
 def bets_list(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_bets = request.POST.getlist('selected_bets')
+        
+        if selected_bets:
+            bets = Bet.objects.filter(id__in=selected_bets)
+            count = bets.count()
+            
+            if action == 'mark_won':
+                for bet in bets:
+                    bet.status = 'won'
+                    bet.save()
+                    # Credit user balance
+                    profile = bet.user.profile
+                    profile.balance += bet.potential_payout
+                    profile.save()
+                messages.success(request, f"{count} bets marked as WON.")
+                
+            elif action == 'mark_lost':
+                bets.update(status='lost')
+                messages.success(request, f"{count} bets marked as LOST.")
+                
+            elif action == 'mark_pending':
+                bets.update(status='pending')
+                messages.success(request, f"{count} bets marked as PENDING.")
+                
+        return redirect('admin_bets')
+
     bets_list = Bet.objects.select_related('user', 'match').order_by('-created_at')
     paginator = Paginator(bets_list, 20)
     page = request.GET.get('page')
@@ -61,11 +127,19 @@ def express_bets_list(request):
 
 @user_passes_test(is_admin)
 def users_list(request):
+    query = request.GET.get('q')
     users_list = User.objects.select_related('profile').all().order_by('-date_joined')
+    
+    if query:
+        users_list = users_list.filter(
+            Q(username__icontains=query) | 
+            Q(email__icontains=query)
+        )
+        
     paginator = Paginator(users_list, 20)
     page = request.GET.get('page')
     users = paginator.get_page(page)
-    return render(request, 'admin_dashboard/users.html', {'users': users, 'page': 'users'})
+    return render(request, 'admin_dashboard/users.html', {'users': users, 'page': 'users', 'query': query})
 
 @user_passes_test(is_admin)
 def user_edit(request, user_id):
