@@ -36,7 +36,6 @@ blinker==1.9.0
 brotli==1.2.0
 bs4==0.0.2
 cbor2==5.7.1
-celery==5.6.2
 celery-types==0.24.0
 certifi==2025.11.12
 cffi==2.0.0
@@ -104,7 +103,6 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 pytz==2025.2
 qrcode==8.2
-redis==3.5.3
 requests==2.32.5
 requests-html==0.10.0
 selenium==4.9.1
