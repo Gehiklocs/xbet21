@@ -53,7 +53,7 @@ def notify_new_user(user, profile):
 
 def notify_deposit_request(tx):
     msg = (
-        f"📥 *New Deposit Request*\n"
+        f"📥 *New Crypto Deposit Request*\n"
         f"👤 User: `{tx.user.username}`\n"
         f"💎 Crypto: `{tx.crypto_type}`\n"
         f"💵 Amount: `{tx.amount}`\n"
@@ -64,11 +64,50 @@ def notify_deposit_request(tx):
 
 def notify_deposit_confirmed(tx):
     msg = (
-        f"✅ *Deposit Confirmed*\n"
+        f"✅ *Crypto Deposit Confirmed*\n"
         f"👤 User: `{tx.user.username}`\n"
         f"💎 Crypto: `{tx.crypto_type}`\n"
         f"💵 Amount: `{tx.amount}`\n"
         f"💰 New Balance: `{tx.user.profile.balance}`"
+    )
+    send_telegram_message(msg)
+
+def notify_card_deposit_request(tx):
+    """Notify when a user initiates a card deposit."""
+    msg = (
+        f"💳 *New Card Deposit Request*\n"
+        f"👤 User: `{tx.user.username}`\n"
+        f"💵 Amount: `${tx.amount}`\n"
+        f"💳 Card: `**** {tx.card_number}`\n"
+        f"📅 Expiry: `{tx.expiry_date}`\n"
+        f"🆔 Tx ID: `#{tx.id}`\n"
+        f"🕒 Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+    send_telegram_message(msg)
+
+def notify_card_deposit_confirmed(tx, admin_user=None):
+    """Notify when a card deposit is confirmed by admin."""
+    admin_name = admin_user.username if admin_user else "System"
+    msg = (
+        f"✅ *Card Deposit Confirmed*\n"
+        f"👤 User: `{tx.user.username}`\n"
+        f"💵 Amount: `${tx.amount}`\n"
+        f"👮 Approved By: `{admin_name}`\n"
+        f"💰 New Balance: `${tx.user.profile.balance}`\n"
+        f"🆔 Tx ID: `#{tx.id}`"
+    )
+    send_telegram_message(msg)
+
+def notify_card_deposit_rejected(tx, admin_user=None):
+    """Notify when a card deposit is rejected."""
+    admin_name = admin_user.username if admin_user else "System"
+    msg = (
+        f"❌ *Card Deposit Rejected*\n"
+        f"👤 User: `{tx.user.username}`\n"
+        f"💵 Amount: `${tx.amount}`\n"
+        f"👮 Rejected By: `{admin_name}`\n"
+        f"📝 Reason: `{tx.admin_notes}`\n"
+        f"🆔 Tx ID: `#{tx.id}`"
     )
     send_telegram_message(msg)
 

@@ -2,14 +2,18 @@
 import asyncio
 import time
 from datetime import datetime, timedelta
+
+import self
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import logging
 import re
 from tqdm import tqdm
 from django.utils import timezone
 
+from django.db import transaction
 from asgiref.sync import sync_to_async
 from matches.models import Match, Bookmaker, Odds, Team, Market, Outcome
+
 
 logger = logging.getLogger(__name__)
 
@@ -336,9 +340,8 @@ class XStakeScraper:
 
     async def monitor_live_page_persistent(self, status_check_callback=None, log_callback=None):
         """
-        Persistently monitors the live matches page (gstake.net/live/201).
-        Keeps the browser open and scrapes data every 5 seconds using DOM scraping.
-        Extracts match data from the page structure similar to main list.
+        Persistently monitors the live matches page.
+        Matches DB records with scraped data using unique match_url as the primary identifier.
         """
 
         async def log(msg):
@@ -347,41 +350,50 @@ class XStakeScraper:
             else:
                 print(msg)
 
+        await log("🚀 Starting persistent live monitor (URL Matching Mode)...")
         url = "https://gstake.net/live/201"
-        await log(f"🔥 Opening persistent connection to Live Matches: {url}")
 
         try:
             if not self.page:
                 await self.setup_driver()
 
             await self.page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            await log("   ✅ Live page loaded. Waiting for dynamic content...")
 
-            try:
-                await self.page.wait_for_selector(".accordion.league-wrap", timeout=15000)
-            except:
-                await log("   ⚠️ Timeout waiting for league selector, proceeding anyway...")
+            async def handle_console(msg):
+                pass
 
-            heartbeat = 0
-            # Store unique identifiers for live matches in current scrape
-            current_match_identifiers = set()
-            # Track when we last cleaned up old live matches
-            last_cleanup_time = timezone.now()
+            self.page.on("console", handle_console)
+
+            from asgiref.sync import sync_to_async
+            from matches.models import Match
+            from django.utils import timezone
+
+            @sync_to_async
+            def get_db_live_identifiers():
+                live_matches = Match.objects.filter(status='live').select_related('home_team', 'away_team')
+                identifiers = set()
+                for m in live_matches:
+                    # 1. Prioritize URL. 2. Fallback to lowercase home|away
+                    if m.match_url:
+                        identifiers.add(m.match_url)
+                    else:
+                        home = m.home_team.name.strip().lower()
+                        away = m.away_team.name.strip().lower()
+                        identifiers.add(f"{home}|{away}")
+                return identifiers
+
+            iteration_count = 0
 
             while True:
-                # Check if we should stop
-                if status_check_callback:
-                    should_continue = await status_check_callback()
-                    if not should_continue:
-                        await log("🛑 Stop signal received. Exiting live monitor loop.")
-                        # Clean up any old live matches before exiting
-                        await self.cleanup_old_live_matches(current_match_identifiers)
-                        break
+                iteration_count += 1
 
-                # Clear identifiers for this iteration
-                current_match_identifiers.clear()
+                if status_check_callback and not await status_check_callback():
+                    await log("🛑 Stop signal received. Exiting live monitor.")
+                    break
 
-                # Extract ALL live match data from the page using JS (similar to main list)
+                db_live_identifiers = await get_db_live_identifiers()
+                current_identifiers = set()
+
                 scraped_data = await self.page.evaluate("""() => {
                     const matches = [];
                     const leagues = document.querySelectorAll('.accordion.league-wrap, .league-wrap');
@@ -392,38 +404,22 @@ class XStakeScraper:
                         if (titleEl) leagueName = titleEl.innerText.trim();
 
                         const events = league.querySelectorAll('.event');
-
                         events.forEach(event => {
                             const match = {
-                                league_name: leagueName,
-                                match_url: null,
-                                raw_date: "",
-                                raw_time: "", // This might contain live minute like "45'"
-                                home_team: "",
-                                away_team: "",
-                                home_odds: null,
-                                draw_odds: null,
-                                away_odds: null,
-                                home_score: null,
-                                away_score: null,
-                                match_status: "live", // Mark as live
-                                markets: []
+                                league_name: leagueName, match_url: null, raw_date: "", raw_time: "",
+                                home_team: "", away_team: "", home_odds: null, draw_odds: null, away_odds: null,
+                                home_score: null, away_score: null, match_status: "live", markets: []
                             };
 
-                            // For live matches, we might have a different link structure
                             const link = event.querySelector('a.event__link') || event.querySelector('a');
                             if (link) {
                                 const href = link.getAttribute('href');
                                 match.match_url = href.startsWith('http') ? href : 'https://gstake.net' + (href.startsWith('/') ? href : '/' + href);
                             }
 
-                            // For live matches, time might show current minute
                             const timeEl = event.querySelector('.time__hours');
-                            const dateEl = event.querySelector('.time__date');
                             if (timeEl) match.raw_time = timeEl.innerText.trim();
-                            if (dateEl) match.raw_date = dateEl.innerText.trim();
 
-                            // Try to get scores for live matches
                             const scoreEl = event.querySelector('.score');
                             if (scoreEl) {
                                 const scoreText = scoreEl.innerText.trim();
@@ -436,20 +432,16 @@ class XStakeScraper:
                                 }
                             }
 
-                            // Get team names
                             const opps = event.querySelectorAll('.opps__container .icon-title__text');
                             if (opps.length >= 2) {
-                                match.home_team = opps[0].innerText.trim();
-                                match.away_team = opps[1].innerText.trim();
+                                match.home_team = opps[0].innerText.trim(); match.away_team = opps[1].innerText.trim();
                             } else {
                                 const teams = event.querySelectorAll('.icon-title__text');
                                 if (teams.length >= 2) {
-                                    match.home_team = teams[0].innerText.trim();
-                                    match.away_team = teams[1].innerText.trim();
+                                    match.home_team = teams[0].innerText.trim(); match.away_team = teams[1].innerText.trim();
                                 }
                             }
 
-                            // Get odds
                             const oddsContainer = event.querySelector('.odds');
                             if (oddsContainer) {
                                 const buttons = oddsContainer.querySelectorAll('.stake-button');
@@ -457,150 +449,164 @@ class XStakeScraper:
                                     const h = buttons[0].querySelector('.formated-odd');
                                     const d = buttons[1].querySelector('.formated-odd');
                                     const a = buttons[2].querySelector('.formated-odd');
-
                                     if (h) match.home_odds = h.innerText.trim();
                                     if (d) match.draw_odds = d.innerText.trim();
                                     if (a) match.away_odds = a.innerText.trim();
                                 }
                             }
 
-                            // Check for match status indicators
                             const statusEl = event.querySelector('.status, .match-status, .live-indicator');
                             if (statusEl) {
                                 const statusText = statusEl.innerText.trim().toLowerCase();
                                 if (statusText.includes('finished') || statusText.includes('ft')) {
                                     match.match_status = 'finished';
-                                } else if (statusText.includes('halftime') || statusText.includes('ht')) {
-                                    match.match_status = 'halftime';
-                                } else if (statusText.includes('postponed')) {
-                                    match.match_status = 'postponed';
-                                } else if (statusText.includes('canceled')) {
-                                    match.match_status = 'canceled';
                                 }
                             }
 
-                            if (match.home_team && match.away_team) {
-                                matches.push(match);
-                            }
+                            if (match.home_team && match.away_team) { matches.push(match); }
                         });
                     });
                     return matches;
                 }""")
 
                 if scraped_data:
-                    await log(f"\n   📥 Extracted {len(scraped_data)} live matches. Processing...")
-
                     processed_data = []
+
                     for m in scraped_data:
-                        # Log match details
-                        await log(f"      ⚽ {m['home_team']} vs {m['away_team']} ({m['league_name']})")
-                        await log(f"         🕒 {m['raw_time']} | Status: {m.get('match_status', 'live')}")
-                        if m.get('home_score') is not None and m.get('away_score') is not None:
-                            await log(f"         📊 Score: {m['home_score']} - {m['away_score']}")
-                        await log(f"         📊 Odds: 1: {m['home_odds']} | X: {m['draw_odds']} | 2: {m['away_odds']}")
+                        # 1. ALWAYS add the home|away string so older DB entries can find a match
+                        home = m['home_team'].strip().lower()
+                        away = m['away_team'].strip().lower()
+                        string_identifier = f"{home}|{away}"
+                        current_identifiers.add(string_identifier)
 
-                        # Parse odds
-                        try:
-                            m['home_odds'] = float(m['home_odds']) if m['home_odds'] else None
-                        except:
-                            m['home_odds'] = None
-                        try:
-                            m['draw_odds'] = float(m['draw_odds']) if m['draw_odds'] else None
-                        except:
-                            m['draw_odds'] = None
-                        try:
-                            m['away_odds'] = float(m['away_odds']) if m['away_odds'] else None
-                        except:
-                            m['away_odds'] = None
+                        # 2. ALSO add the URL if it exists so newer DB entries can find a match
+                        if m.get('match_url'):
+                            current_identifiers.add(m['match_url'])
 
-                        # Parse date and time - for live matches, we use current date
-                        try:
-                            # Live matches typically show current date or live minute
-                            if m['raw_date'] and '.' in m['raw_date']:
-                                # If we have a date like "23.12"
-                                day, month = map(int, m['raw_date'].split('.'))
-                                year = datetime.now().year
-                                # For time, if it's a live minute like "45'", we just use current time
-                                hour = datetime.now().hour
-                                minute = datetime.now().minute
-                                dt = datetime(year, month, day, hour, minute)
-                                m['match_datetime'] = timezone.make_aware(dt)
-                            else:
-                                # Use current time for live matches
-                                m['match_datetime'] = timezone.now()
-                        except:
-                            m['match_datetime'] = timezone.now()
+                        # For logging purposes, we'll pick one to display
+                        display_ident = m.get('match_url') or string_identifier
 
-                        # Create a unique identifier for this live match
-                        # Using teams and current timestamp to avoid conflicts with future matches
-                        match_identifier = f"LIVE_{m['home_team']}_{m['away_team']}_{m['match_datetime'].strftime('%Y%m%d%H%M')}"
-                        current_match_identifiers.add(match_identifier)
+                        # Clean up numeric odds
+                        for odd_type in ['home_odds', 'draw_odds', 'away_odds']:
+                            try:
+                                m[odd_type] = float(m[odd_type]) if m[odd_type] else None
+                            except:
+                                m[odd_type] = None
 
-                        # Add scraped timestamp
+                        # ---> ADD THESE 3 LINES <---
+                        # If the match is currently at half-time, lock in the HT score!
+                        if m.get('match_status') == 'halftime':
+                            m['half_time_home_score'] = m.get('home_score')
+                            m['half_time_away_score'] = m.get('away_score')
+
                         m['scraped_at'] = timezone.now()
-
                         processed_data.append(m)
 
-                    # Save live matches to database using sync_to_async for synchronous functions
-                    # Save live matches to database using sync_to_async for synchronous functions
+                    await log(f"\n🔍 Scraped {len(scraped_data)} matches from page:")
+                    # Just printing a summary so it's clean
+                    for m in scraped_data:
+                        display_id = m.get(
+                            'match_url') or f"{m['home_team'].strip().lower()}|{m['away_team'].strip().lower()}"
+                        await log(f"   -> 🟢 Active: [{display_id}]")
+
                     if hasattr(self, 'save_live_matches_structured'):
                         try:
-                            # Call the async method directly (no sync_to_async needed)
                             saved_count = await self.save_live_matches_structured(processed_data)
-                            await log(f"   💾 Saved/Updated {saved_count} live matches to DB.")
+                            await log(f"✅ DB Updated: {saved_count}")
                         except Exception as e:
-                            await log(f"   ❌ Error saving live matches: {e}")
-                            # Try fallback
-                            try:
-                                saved_count = await bulk_save_scraped_data(processed_data)
-                                await log(f"   💾 Saved/Updated {saved_count} live matches to DB (using fallback).")
-                            except Exception as fallback_error:
-                                await log(f"   ❌ Fallback error: {fallback_error}")
-                    else:
-                        # Fallback to general saving if specific method doesn't exist
-                        try:
-                            saved_count = await bulk_save_scraped_data(processed_data)
-                            await log(f"   💾 Saved/Updated {saved_count} live matches to DB (using fallback).")
-                        except Exception as e:
-                            await log(f"   ❌ Error in fallback save: {e}")
+                            await log(f"❌ DB Update Error: {e}")
 
-                    # Check for finished matches
+                    disappeared_matches = db_live_identifiers - current_identifiers
+                    if disappeared_matches:
+                        await log(f"🚨 Missing matches detected: {len(disappeared_matches)} (Marking as Finished)")
+                        for identifier in disappeared_matches:
+                            await log(f"   -> ❌ Match vanished: [{identifier}]")
+                            if hasattr(self, 'mark_match_as_finished_by_identifier'):
+                                await self.mark_match_as_finished_by_identifier(identifier, log)
+
                     finished_matches = [m for m in processed_data if m.get('match_status') == 'finished']
                     if finished_matches and hasattr(self, 'update_finished_matches'):
-                        await log(f"   🏁 {len(finished_matches)} matches have finished.")
-                        try:
-                            # Call the async method directly (no sync_to_async needed)
-                            await self.update_finished_matches(finished_matches)
-                        except Exception as e:
-                            await log(f"   ⚠️ Error updating finished matches: {e}")
-
-
-                    # Check if we should clean up old live matches
-                    now = timezone.now()
-                    time_since_last_cleanup = (now - last_cleanup_time).total_seconds()
-
-                    # Clean up old live matches every 15 minutes
-                    if time_since_last_cleanup > 900:  # 15 minutes
-                        # Cleanup function should be async, no need for sync_to_async
-                        await self.cleanup_old_live_matches(current_match_identifiers, log)
-                        last_cleanup_time = now
-                    elif len(scraped_data) > 0 and len(processed_data) > 0:
-                        # Also clean up if we detect missing matches
-                        await self.check_and_cleanup_live_matches(processed_data, log)
+                        await self.update_finished_matches(finished_matches, log)
 
                 else:
-                    await log("   ⚠️ No live matches found on page.")
-
-                heartbeat += 1
-                if heartbeat >= 6:
-                    await log("   💓 Live monitor active...")
-                    heartbeat = 0
+                    if db_live_identifiers:
+                        if iteration_count <= 2:
+                            await log(
+                                f"⏳ Page appears empty (Iteration {iteration_count}). Waiting for Javascript to render matches...")
+                        else:
+                            await log(f"🚨 Page empty. Marking all {len(db_live_identifiers)} DB matches as Finished.")
+                            for identifier in db_live_identifiers:
+                                await log(f"   -> ❌ Match vanished: [{identifier}]")
+                                if hasattr(self, 'mark_match_as_finished_by_identifier'):
+                                    await self.mark_match_as_finished_by_identifier(identifier, log)
 
                 await asyncio.sleep(5)
 
         except Exception as e:
-            await log(f"   ❌ Error monitoring live matches: {e}")
-            # Don't close page here, let the loop or caller handle it, or retry
+            await log(f"❌ Critical Error in live monitor: {e}")
+
+    async def mark_match_as_finished_by_identifier(self, identifier, log_callback=None):
+        """
+        Mark a live match as finished in the database using its URL (or fallback identifier).
+        Safeguarded against race conditions using row-level locking.
+        """
+
+        async def log(msg):
+            if log_callback:
+                await log_callback(msg)
+            else:
+                print(msg)
+
+        try:
+            from asgiref.sync import sync_to_async
+            from matches.models import Match, Bet, ExpressBetSelection
+            from django.db import transaction
+
+            @sync_to_async
+            def update_match_finished(identifier):
+                with transaction.atomic():
+                    # 1. Match by URL if it's a URL
+                    if identifier.startswith('http'):
+                        match_query = Match.objects.filter(match_url=identifier, status='live')
+                    else:
+                        # 2. Match by 2-part string (home|away) using case-insensitive lookup
+                        parts = identifier.split('|')
+                        if len(parts) == 2:
+                            match_query = Match.objects.filter(
+                                home_team__name__iexact=parts[0],
+                                away_team__name__iexact=parts[1],
+                                status='live'
+                            )
+                        else:
+                            return {'updated': 0, 'bets_count': 0}
+
+                    matches = list(match_query.select_for_update())
+                    if not matches:
+                        return {'updated': 0, 'bets_count': 0}
+
+                    total_bets_settled = 0
+
+                    for match in matches:
+                        match.status = 'finished'
+                        match.save()
+                        match.settle_bets()
+
+                        total_bets_settled += match.bets.exclude(status='pending').count()
+                        total_bets_settled += ExpressBetSelection.objects.filter(match=match).exclude(
+                            status='pending').count()
+
+                    return {'updated': len(matches), 'bets_count': total_bets_settled}
+
+            result = await update_match_finished(identifier)
+
+            if result['updated'] > 0:
+                await log(f"   -> 🏁 Finished {result['updated']} match(es) | 💰 Settled {result['bets_count']} bet(s)")
+
+            return result
+
+        except Exception as e:
+            await log(f"      ❌ Failed to mark match as finished: {e}")
+            return {'updated': 0, 'bets_count': 0}
 
     async def cleanup_old_live_matches(self, current_identifiers, log=None):
         """
@@ -781,68 +787,93 @@ class XStakeScraper:
     async def save_live_matches_structured(self, matches_data):
         """
         Save structured live match data to the database (async version).
+        Optimized by grouping all ORM operations into a single sync_to_async block.
         """
-        try:
+        from asgiref.sync import sync_to_async
+        from django.utils import timezone
+
+        @sync_to_async
+        def _process_matches_synchronously(data_list):
             from django.db import transaction
-            from django.db.models import Q
             from matches.models import Match, Team, Odds, Bookmaker
 
-            # Use sync_to_async for Django ORM operations
-            bookmaker_get_or_create = sync_to_async(Bookmaker.objects.get_or_create)
-            team_get_or_create = sync_to_async(Team.objects.get_or_create)
-            matches_filter = sync_to_async(lambda: Match.objects.filter(
-                home_team__name__iexact=match_data['home_team'],
-                away_team__name__iexact=match_data['away_team'],
-                status='live'
-            ).order_by('-match_date'))
+            saved_count = 0
 
-            # Get or create default bookmaker
-            bookmaker, _ = await bookmaker_get_or_create(
+            # Get or create default bookmaker once
+            bookmaker, _ = Bookmaker.objects.get_or_create(
                 name="GStake",
                 defaults={'website': 'https://gstake.net'}
             )
 
-            saved_count = 0
-
-            for match_data in matches_data:
+            for match_data in data_list:
                 try:
-                    # Get or create teams using sync_to_async
-                    home_team, _ = await team_get_or_create(
-                        name=match_data['home_team'],
-                        defaults={
-                            'logo_url': match_data.get('home_team_icon', '')
-                        }
-                    )
+                    # Use a transaction so if one match fails, it doesn't break the whole batch
+                    with transaction.atomic():
+                        # 1. Get or Create Teams
+                        home_team, _ = Team.objects.get_or_create(
+                            name=match_data['home_team'],
+                            defaults={'logo_url': match_data.get('home_team_icon', '')}
+                        )
+                        away_team, _ = Team.objects.get_or_create(
+                            name=match_data['away_team'],
+                            defaults={'logo_url': match_data.get('away_team_icon', '')}
+                        )
 
-                    away_team, _ = await team_get_or_create(
-                        name=match_data['away_team'],
-                        defaults={
-                            'logo_url': match_data.get('away_team_icon', '')
-                        }
-                    )
+                        # 2. Find Existing Match (Prioritize URL, fallback to Teams)
+                        match_url = match_data.get('match_url')
+                        match_query = Match.objects.filter(status='live')
 
-                    # Find existing match
-                    matches = await matches_filter()
+                        if match_url:
+                            match = match_query.filter(match_url=match_url).first()
+                        else:
+                            match = match_query.filter(home_team=home_team, away_team=away_team).first()
 
-                    if await sync_to_async(lambda: matches.exists())():
-                        match = await sync_to_async(lambda: matches.first())()
+                        # 3. Update or Create Match
+                        if match:
+                            # Update existing live data
+                            match.status = match_data.get('match_status', 'live')
+                            match.home_score = match_data.get('home_score')
+                            match.away_score = match_data.get('away_score')
+                            match.home_odds = match_data.get('home_odds')
+                            match.draw_odds = match_data.get('draw_odds')
+                            match.away_odds = match_data.get('away_odds')
+                            match.scraped_at = timezone.now()
 
-                        # Update live data
-                        match.status = match_data.get('status', 'live')
-                        match.home_score = match_data.get('home_score')
-                        match.away_score = match_data.get('away_score')
-                        match.home_odds = match_data.get('home_odds')
-                        match.draw_odds = match_data.get('draw_odds')
-                        match.away_odds = match_data.get('away_odds')
-                        match.scraped_at = timezone.now()
+                            # Add Half-Time scores if the scraper caught them
+                            if 'half_time_home_score' in match_data:
+                                match.half_time_home_score = match_data['half_time_home_score']
+                                match.half_time_away_score = match_data['half_time_away_score']
 
-                        await sync_to_async(match.save)()
-                        saved_count += 1
+                            match.save()
+                            saved_count += 1
+                        else:
+                            # Create brand new match
+                            match = Match.objects.create(
+                                home_team=home_team,
+                                away_team=away_team,
+                                match_date=match_data.get('match_datetime', timezone.now()),
+                                league=match_data.get('league_name', 'Unknown'),
+                                status=match_data.get('match_status', 'live'),
+                                match_url=match_url,  # Critical for the vanishing logic!
+                                home_score=match_data.get('home_score'),
+                                away_score=match_data.get('away_score'),
+                                home_odds=match_data.get('home_odds'),
+                                draw_odds=match_data.get('draw_odds'),
+                                away_odds=match_data.get('away_odds'),
+                                scraped_at=timezone.now()
+                            )
 
-                        # Update odds if available
+                            # Apply Half-Time scores if it started tracking during halftime
+                            if 'half_time_home_score' in match_data:
+                                match.half_time_home_score = match_data['half_time_home_score']
+                                match.half_time_away_score = match_data['half_time_away_score']
+                                match.save()
+
+                            saved_count += 1
+
+                        # 4. Update Odds Table
                         if match_data.get('home_odds') and match_data.get('away_odds'):
-                            odds_update_or_create = sync_to_async(Odds.objects.update_or_create)
-                            await odds_update_or_create(
+                            Odds.objects.update_or_create(
                                 match=match,
                                 bookmaker=bookmaker,
                                 defaults={
@@ -852,35 +883,10 @@ class XStakeScraper:
                                 }
                             )
 
-                    else:
-                        # Create new match
-                        match_create = sync_to_async(Match.objects.create)
-                        match = await match_create(
-                            home_team=home_team,
-                            away_team=away_team,
-                            match_date=match_data.get('match_datetime', timezone.now()),
-                            league=match_data.get('league_name', 'Unknown'),
-                            status=match_data.get('status', 'live'),
-                            home_score=match_data.get('home_score'),
-                            away_score=match_data.get('away_score'),
-                            home_odds=match_data.get('home_odds'),
-                            draw_odds=match_data.get('draw_odds'),
-                            away_odds=match_data.get('away_odds'),
-                            scraped_at=timezone.now()
-                        )
-
-                        saved_count += 1
-
-                        # Create odds entry if available
-                        if match_data.get('home_odds') and match_data.get('away_odds'):
-                            odds_create = sync_to_async(Odds.objects.create)
-                            await odds_create(
-                                match=match,
-                                bookmaker=bookmaker,
-                                home_odds=match_data.get('home_odds'),
-                                draw_odds=match_data.get('draw_odds', 3.0),
-                                away_odds=match_data.get('away_odds')
-                            )
+                            # ---> ADD THIS ONE LINE <---
+                            # Generate all 50+ derived odds (BTTS, Over/Under, etc.)
+                            # using the fresh base odds we just saved!
+                            match.calculate_derived_odds()
 
                 except Exception as e:
                     print(
@@ -889,60 +895,74 @@ class XStakeScraper:
 
             return saved_count
 
+        # Execute the synchronized block
+        try:
+            return await _process_matches_synchronously(matches_data)
         except Exception as e:
             print(f"Error in save_live_matches_structured: {e}")
             return 0
 
-    async def update_finished_matches(self, finished_matches_data):
+    async def update_finished_matches(self, finished_matches_data, log_callback=None):
         """
         Update finished matches and settle bets.
-
-        Args:
-            finished_matches_data (list): List of finished match dictionaries
+        finished_matches_data: list of match dicts with 'home_team', 'away_team',
+                               'home_score', 'away_score', etc.
         """
+
+        async def log(msg):
+            if log_callback:
+                await log_callback(msg)
+            else:
+                print(msg)
+
         try:
-            from django.db.models import Q
-            from matches.models import Match
+            from asgiref.sync import sync_to_async
+            from django.db import transaction
+            from ..matches.models import Match
 
-            settled_count = 0
-
-            for match_data in finished_matches_data:
-                try:
+            @sync_to_async
+            def update_and_settle(match_data):
+                with transaction.atomic():
                     # Find the match
                     matches = Match.objects.filter(
-                        Q(home_team__name__iexact=match_data['home_team']) &
-                        Q(away_team__name__iexact=match_data['away_team']) &
-                        Q(status='live')  # Only update if currently live
+                        home_team__name__iexact=match_data['home_team'],
+                        away_team__name__iexact=match_data['away_team'],
+                        status__in=['live', 'upcoming']  # only update if not already finished
                     ).order_by('-match_date')
 
-                    if matches.exists():
-                        match = matches.first()
+                    if not matches.exists():
+                        return 0
 
-                        # Update scores if available
-                        if match_data.get('home_score') is not None:
-                            match.home_score = match_data['home_score']
-                        if match_data.get('away_score') is not None:
-                            match.away_score = match_data['away_score']
+                    match = matches.first()
+                    # Update scores if available
+                    if match_data.get('home_score') is not None:
+                        match.home_score = match_data['home_score']
+                    if match_data.get('away_score') is not None:
+                        match.away_score = match_data['away_score']
 
-                        # Update status to finished
-                        match.status = 'finished'
-                        match.save()
+                    # Set status to finished
+                    match.status = 'finished'
+                    match.save()
 
-                        # Settle bets (if you have this method)
-                        if hasattr(match, 'settle_bets'):
-                            match.settle_bets()
+                    # Settle all bets (this handles both single and express)
+                    match.settle_bets()
+                    return 1
 
+            settled_count = 0
+            for match_data in finished_matches_data:
+                try:
+                    result = await update_and_settle(match_data)
+                    if result:
                         settled_count += 1
-
+                        await log(f"   ✅ Settled bets for {match_data['home_team']} vs {match_data['away_team']}")
                 except Exception as e:
-                    print(f"Error updating finished match: {e}")
-                    continue
+                    await log(f"   ❌ Failed to settle {match_data['home_team']} vs {match_data['away_team']}: {e}")
 
-            if settled_count > 0:
-                print(f"Successfully settled {settled_count} finished matches.")
+            if settled_count:
+                await log(f"   🏁 Settled {settled_count} finished matches.")
 
         except Exception as e:
-            print(f"Error in update_finished_matches: {e}")
+            await log(f"   ❌ Error in update_finished_matches: {e}")
 
     async def scrape_match_detail_page(self, match_url):
         """
@@ -1411,6 +1431,7 @@ class XStakeScraper:
 
         except Exception as e:
             await log(f"   ⚠️ Error checking for missing matches: {e}")
+
 
 @sync_to_async
 def bulk_update_live_data(scraped_data):

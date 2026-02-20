@@ -2350,6 +2350,8 @@
     }
 </style>
 
+
+
 <div x-data="matchDetail()" x-init="init()" class="page-container">
     <!-- Main Content -->
     <main class="slide-up" style="
@@ -2415,6 +2417,48 @@
                 </div>
             </div>
         </section>
+        <style>
+            /* Desktop: Show all markets stacked, hide tabs */
+@media (min-width: 1101px) {
+    /* Hide the tab navigation */
+    .tab-nav {
+        display: none !important;
+    }
+
+    /* Force every market section to be visible (override Alpine's x-show) */
+    [x-show="activeTab === 'main'"],
+    [x-show="activeTab === 'goals'"],
+    [x-show="activeTab === 'handicaps'"],
+    [x-show="activeTab === 'halftime'"],
+    [x-show="activeTab === 'other'"] {
+        display: block !important;
+    }
+
+    [x-show="activeTab === 'main'"],
+    [x-show="activeTab === 'goals'"],
+    [x-show="activeTab === 'handicaps'"],
+    [x-show="activeTab === 'halftime'"],
+    [x-show="activeTab === 'other'"] {
+        margin-top:15px;
+    }
+
+    /* Add spacing between sections for better readability */
+    .fade-in {
+        margin-bottom: 2.5rem;
+    }
+
+    /* Optional: make the main content area a bit wider */
+
+}
+
+/* Mobile: keep tabs and default x-show behavior (no changes needed) */
+@media (max-width: 1100px) {
+    /* Ensure tabs are displayed as usual */
+    .tab-nav {
+        display: flex; /* or whatever original display value */
+    }
+}
+        </style>
 
         <!-- Betting Markets Tabs -->
         <nav class="tab-nav">

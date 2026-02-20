@@ -62,9 +62,29 @@
                 <i class="fas fa-wallet w-6"></i> Wallets
             </a>
 
+            <div class="px-4 mt-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Reference Data</div>
+            <a href="{% url 'admin_teams' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'teams' %}active{% endif %}">
+                <i class="fas fa-shield-alt w-6"></i> Teams
+            </a>
+            <a href="{% url 'admin_bookmakers' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'bookmakers' %}active{% endif %}">
+                <i class="fas fa-book w-6"></i> Bookmakers
+            </a>
+
             <div class="px-4 mt-6 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">System</div>
+            <a href="{% url 'admin_schedules' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'schedules' %}active{% endif %}">
+                <i class="fas fa-clock w-6"></i> Task Schedules
+            </a>
+            <a href="{% url 'admin_groups' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'groups' %}active{% endif %}">
+                <i class="fas fa-user-shield w-6"></i> User Groups
+            </a>
             <a href="{% url 'admin_scraper' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'scraper' %}active{% endif %}">
                 <i class="fas fa-robot w-6"></i> Scraper Control
+            </a>
+            <a href="{% url 'admin_proxies' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'proxies' %}active{% endif %}">
+                <i class="fas fa-network-wired w-6"></i> Proxies
+            </a>
+            <a href="{% url 'admin_onewin_accounts' %}" class="sidebar-link flex items-center px-6 py-3 text-slate-400 {% if page == 'onewin_accounts' %}active{% endif %}">
+                <i class="fas fa-user-circle w-6"></i> 1Win Accounts
             </a>
         </nav>
 

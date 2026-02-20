@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from decimal import Decimal
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -207,6 +207,11 @@ Q_CLUSTER = {
     'label': 'Django Q',
     'orm': 'default',  # Use Django ORM (SQLite) as broker
 }
+
+# Card payment settings
+CARD_MIN_DEPOSIT_AMOUNT = Decimal('10.00')
+CARD_MAX_DEPOSIT_AMOUNT = Decimal('10000.00')
+CARD_PAYMENT_TIMEOUT_MINUTES = 30
 
 # Proxy Configuration (Crucial for Docker/Nginx)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

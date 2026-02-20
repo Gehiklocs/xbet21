@@ -1,0 +1,1340 @@
+{% include 'includes/header.html' %}
+{% load static %}
+
+{% block title %}Transaction #{{ transaction.id }} Details{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-glow: #818cf8;
+        --secondary: #06d6a0;
+        --dark: #0f172a;
+        --darker: #020617;
+        --card-bg: rgba(30, 41, 59, 0.6);
+        --glass: rgba(255, 255, 255, 0.05);
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+        color: var(--text);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+
+    .admin-detail-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem;
+        min-height: 100vh;
+    }
+
+    /* Header Styles */
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid var(--glass);
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--glass);
+        color: var(--text);
+        text-decoration: none;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .back-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+    }
+
+    .header-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+
+    .transaction-id {
+        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Grid Layout */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Card Styles */
+    .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass);
+        border-radius: 20px;
+        padding: 2rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass);
+    }
+
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+
+    .card-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+    }
+
+    /* Info Item Styles */
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        transition: background 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .info-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--glass);
+    }
+
+    .info-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-label i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .info-value {
+        color: var(--text);
+        font-weight: 600;
+        font-size: 1rem;
+        text-align: right;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-pending-approval {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-confirmed {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 214, 160, 0.1));
+        color: var(--secondary);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-canceled {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(248, 113, 113, 0.1));
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Amount Display */
+    .amount-display {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(129, 140, 248, 0.1));
+        border-radius: 16px;
+        margin: 2rem 0;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .amount-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .amount-value {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--primary);
+        font-family: 'Inter', sans-serif;
+        text-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    /* User Badge */
+    .user-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid var(--glass);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    /* Action Card */
+    .action-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.03));
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .action-card::before {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass);
+        border-radius: 12px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Button Styles */
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        border: none;
+        font-family: inherit;
+    }
+
+    .btn-lg {
+        padding: 1.2rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.7s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--secondary), #10b981);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(6, 214, 160, 0.4);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger), #f87171);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--glass);
+    }
+
+    .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--primary);
+        transform: translateY(-3px);
+    }
+
+    /* Divider */
+    .action-divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .action-divider::before,
+    .action-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--glass);
+    }
+
+    .action-divider span {
+        padding: 0 1rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .admin-detail-container {
+            padding: 0.75rem;
+        }
+
+        .admin-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+            padding: 1rem 0;
+        }
+
+        .back-button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+        }
+
+        .amount-value {
+            font-size: 2.5rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.875rem;
+        }
+
+        .info-value {
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card {
+            padding: 1.25rem;
+        }
+
+        .amount-value {
+            font-size: 2rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            min-height: 100px;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .status-badge.pending {
+        animation: pulse 2s infinite;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(2, 6, 23, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        animation: fadeInUp 0.3s ease;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        border: 1px solid var(--glass);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 100%;
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .modal-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass);
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .modal-body {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .modal-actions .btn {
+        flex: 1;
+    }
+
+    /* Notification Alert */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-left: 4px solid;
+    }
+
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: #f59e0b;
+        color: #fbbf24;
+    }
+
+    .alert-info {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+        color: #60a5fa;
+    }
+
+    /* Loading Animation */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--glass);
+        border-radius: 50%;
+        border-top-color: var(--primary);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="admin-detail-container">
+    <!-- Header -->
+    <div class="admin-header">
+        <a href="{% url 'admin_home' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+        <h1 class="header-title">Transaction Details</h1>
+        <div class="transaction-id">
+            <i class="fas fa-hashtag"></i>
+            #{{ transaction.id }}
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="detail-grid">
+        <!-- Transaction Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h2 class="card-title">Payment Information</h2>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-user"></i>
+                        Customer
+                    </div>
+                    <div class="info-value">
+                        <div class="user-badge">
+                            <div class="user-avatar">
+                                {{ transaction.user.username|first|upper }}
+                            </div>
+                            <div>
+                                <div style="font-weight: 700;">{{ transaction.user.username }}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">{{ transaction.user.email }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-dollar-sign"></i>
+                        Amount
+                    </div>
+                    <div class="info-value" style="color: var(--primary); font-size: 1.3rem; font-weight: 800;">
+                        ${{ transaction.amount }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-info-circle"></i>
+                        Status
+                    </div>
+                    <div class="info-value">
+                        <span class="status-badge {% if transaction.status == 'pending_approval' %}status-pending-approval pending{% elif transaction.status == 'confirmed' %}status-confirmed{% elif transaction.status == 'canceled' %}status-canceled{% endif %}">
+                            <i class="fas
+                                {% if transaction.status == 'pending_approval' %}fa-clock
+                                {% elif transaction.status == 'confirmed' %}fa-check-circle
+                                {% elif transaction.status == 'canceled' %}fa-times-circle
+                                {% else %}fa-info-circle{% endif %}">
+                            </i>
+                            {{ transaction.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-credit-card"></i>
+                        Card Number
+                    </div>
+                    <div class="info-value" style="font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                        {{ transaction.card_number }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        Expiry
+                    </div>
+                    <div class="info-value">
+                        {{ transaction.expiry_date }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-clock"></i>
+                        Created
+                    </div>
+                    <div class="info-value">
+                        {{ transaction.created_at|date:"M d, Y" }}
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            {{ transaction.created_at|date:"h:i A" }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if transaction.admin_action_by %}
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-user-shield"></i>
+                        Processed By
+                    </div>
+                    <div class="info-value">
+                        {{ transaction.admin_action_by.username }}
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            {{ transaction.admin_action_at|date:"M d, Y h:i A" }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if transaction.admin_notes %}
+                <div class="info-item" style="flex-direction: column; align-items: flex-start;">
+                    <div class="info-label">
+                        <i class="fas fa-sticky-note"></i>
+                        Admin Notes
+                    </div>
+                    <div class="info-value" style="text-align: left; width: 100%; margin-top: 0.5rem; font-style: italic; color: var(--text-muted); background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 8px;">
+                        "{{ transaction.admin_notes }}"
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- NEW: 1Win Account Information -->
+                {% if transaction.onewin_account %}
+                <div class="info-item" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem;">
+                    <div class="info-label" style="color: var(--secondary);">
+                        <i class="fas fa-crown"></i>
+                        1Win Account
+                    </div>
+                    <div class="info-value" style="width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="background: var(--secondary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                1W
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.1rem;">{{ transaction.onewin_account.username }}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                    Status:
+                                    <span class="status-badge
+                                        {% if transaction.onewin_account.status == 'active' %}status-confirmed
+                                        {% elif transaction.onewin_account.status == 'logged_in' %}status-pending-approval
+                                        {% elif transaction.onewin_account.status == 'banned' %}status-canceled
+                                        {% else %}pending{% endif %}">
+                                        {{ transaction.onewin_account.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 8px;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Balance</div>
+                                <div style="font-weight: 700; color: var(--secondary);">${{ transaction.onewin_account.balance }}</div>
+                            </div>
+
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Daily Used</div>
+                                <div style="font-weight: 700;">
+                                    ${{ transaction.onewin_account.total_used }} / ${{ transaction.onewin_account.daily_limit }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Login Success</div>
+                                <div style="font-weight: 700;">
+                                    {{ transaction.onewin_account.successful_logins }}/{{ transaction.onewin_account.login_count }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Last Login</div>
+                                <div style="font-weight: 700;">
+                                    {% if transaction.onewin_account.last_login %}
+                                        {{ transaction.onewin_account.last_login|timesince }} ago
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Proxy Information -->
+                        {% if transaction.onewin_account.proxy %}
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; color: var(--primary);">
+                                <i class="fas fa-shield-alt"></i>
+                                <div style="font-weight: 700;">Proxy Information</div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.9rem;">
+                                <div>
+                                    <span style="color: var(--text-muted);">IP:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem;">{{ transaction.onewin_account.proxy.ip }}</span>
+                                </div>
+
+                                <div>
+                                    <span style="color: var(--text-muted);">Port:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem;">{{ transaction.onewin_account.proxy.port }}</span>
+                                </div>
+
+                                <div>
+                                    <span style="color: var(--text-muted);">Type:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem; text-transform: uppercase;">{{ transaction.onewin_account.proxy.type }}</span>
+                                </div>
+
+                                <div>
+                                    <span style="color: var(--text-muted);">Country:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem;">{{ transaction.onewin_account.proxy.country|default:"Unknown" }}</span>
+                                </div>
+
+                                <div>
+                                    <span style="color: var(--text-muted);">Uses:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem;">
+                                        {{ transaction.onewin_account.proxy.current_uses }}/{{ transaction.onewin_account.proxy.max_uses }}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span style="color: var(--text-muted);">Status:</span>
+                                    <span class="status-badge {% if transaction.onewin_account.proxy.is_active %}status-confirmed{% else %}status-canceled{% endif %}" style="margin-left: 0.5rem;">
+                                        {% if transaction.onewin_account.proxy.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {% if transaction.onewin_account.proxy.username %}
+                            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.1);">
+                                <div>
+                                    <span style="color: var(--text-muted);">Username:</span>
+                                    <span style="font-weight: 700; margin-left: 0.5rem;">{{ transaction.onewin_account.proxy.username }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--danger);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>No proxy assigned to this account</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Quick Actions for 1Win Account -->
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="/admin/accounts/onewinaccount/{{ transaction.onewin_account.id }}/change/"
+                               target="_blank"
+                               class="btn btn-outline"
+                               style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+                                <i class="fas fa-edit"></i>
+                                Edit Account
+                            </a>
+
+                            <a href="/admin/accounts/proxy/{{ transaction.onewin_account.proxy.id }}/change/"
+                               target="_blank"
+                               class="btn btn-outline"
+                               style="font-size: 0.85rem; padding: 0.5rem 1rem;"
+                               {% if not transaction.onewin_account.proxy %}disabled{% endif %}>
+                                <i class="fas fa-server"></i>
+                                View Proxy
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-outline"
+                                    style="font-size: 0.85rem; padding: 0.5rem 1rem;"
+                                    onclick="reassignAccount({{ transaction.id }})">
+                                <i class="fas fa-sync-alt"></i>
+                                Reassign Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="info-item" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem;">
+                    <div class="info-label" style="color: var(--danger);">
+                        <i class="fas fa-exclamation-circle"></i>
+                        1Win Account
+                    </div>
+                    <div class="info-value" style="width: 100%;">
+                        <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--danger); margin-bottom: 0.5rem;">
+                                <i class="fas fa-times-circle"></i>
+                                <div style="font-weight: 700;">No 1Win account assigned</div>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.9rem;">
+                                This transaction was not assigned a 1Win account. This could be due to:
+                                <ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+                                    <li>No available accounts with sufficient balance</li>
+                                    <li>All accounts exceeded daily limits</li>
+                                    <li>System error during assignment</li>
+                                </ul>
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-outline"
+                                    style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;"
+                                    onclick="assignAccount({{ transaction.id }})">
+                                <i class="fas fa-plus-circle"></i>
+                                Assign Account Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- User Profile Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <h2 class="card-title">Customer Profile</h2>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-wallet"></i>
+                        Balance
+                    </div>
+                    <div class="info-value" style="color: var(--secondary); font-size: 1.3rem; font-weight: 800;">
+                        ${{ user_profile.balance }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-calendar-plus"></i>
+                        Member Since
+                    </div>
+                    <div class="info-value">
+                        {{ user_profile.date_joined|date:"F d, Y" }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Last Login
+                    </div>
+                    <div class="info-value">
+                        {{ user_profile.last_login|timesince }} ago
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-id-badge"></i>
+                        User ID
+                    </div>
+                    <div class="info-value" style="font-family: 'Courier New', monospace;">
+                        {{ user_profile.id }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <a href="mailto:{{ transaction.user.email }}" class="btn btn-outline">
+                    <i class="fas fa-envelope"></i>
+                    Email Customer
+                </a>
+                <a href="/admin/auth/user/{{ transaction.user.id }}/change/" target="_blank" class="btn btn-outline">
+                    <i class="fas fa-user-edit"></i>
+                    Edit in Admin Panel
+                </a>
+            </div>
+        </div>
+
+        <!-- Admin Actions Card (Only for Pending Approval) -->
+        {% if transaction.status == 'pending_approval' %}
+        <div class="card action-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-gavel"></i>
+                </div>
+                <h2 class="card-title">Admin Decision Required</h2>
+            </div>
+
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                This transaction requires manual approval. Please review carefully.
+            </div>
+
+            <div class="amount-display">
+                <div class="amount-label">Transaction Amount</div>
+                <div class="amount-value">${{ transaction.amount }}</div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem;">
+                    Customer balance will increase to: ${{ user_profile.balance|add:transaction.amount }}
+                </div>
+            </div>
+
+            <!-- Approve Form -->
+            <form method="post" action="{% url 'admin_approve_transaction' transaction.id %}" id="approveForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="admin_notes_approve" class="form-label">
+                        <i class="fas fa-edit"></i>
+                        Approval Notes (Optional)
+                    </label>
+                    <textarea
+                        class="form-control"
+                        id="admin_notes_approve"
+                        name="admin_notes"
+                        rows="3"
+                        placeholder="Add notes about why you're approving this transaction..."
+                    ></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg" id="approveBtn">
+                    <i class="fas fa-check-circle"></i>
+                    Approve Transaction
+                </button>
+            </form>
+
+            <div class="action-divider">
+                <span>OR</span>
+            </div>
+
+            <!-- Reject Form -->
+            <form method="post" action="{% url 'admin_reject_transaction' transaction.id %}" id="rejectForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="admin_notes_reject" class="form-label">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Rejection Reason (Required)
+                    </label>
+                    <textarea
+                        class="form-control"
+                        id="admin_notes_reject"
+                        name="admin_notes"
+                        rows="3"
+                        required
+                        placeholder="Provide a clear reason for rejecting this transaction..."
+                    ></textarea>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        This reason will be visible to the customer
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger btn-lg" id="rejectBtn">
+                    <i class="fas fa-times-circle"></i>
+                    Reject Transaction
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Confirmation Modals -->
+<div class="modal" id="approveModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-check-circle" style="color: var(--secondary);"></i>
+                Confirm Approval
+            </h3>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to approve this transaction?</p>
+            <div style="background: rgba(6, 214, 160, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(6, 214, 160, 0.2);">
+                <strong>Transaction Details:</strong><br>
+                • Customer: {{ transaction.user.username }}<br>
+                • Amount: <strong>${{ transaction.amount }}</strong><br>
+                • New Balance: ${{ user_profile.balance|add:transaction.amount }}
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">
+                <i class="fas fa-info-circle"></i>
+                This action will immediately add funds to the customer's account.
+            </p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeModal('approveModal')">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-success" onclick="submitForm('approveForm')">
+                Yes, Approve
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="rejectModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-times-circle" style="color: var(--danger);"></i>
+                Confirm Rejection
+            </h3>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to reject this transaction?</p>
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(239, 68, 68, 0.2);">
+                <strong>Rejection Reason:</strong>
+                <div id="rejectionReasonPreview" style="margin-top: 0.5rem; font-style: italic;"></div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">
+                <i class="fas fa-exclamation-circle"></i>
+                This action cannot be undone. The customer will be notified.
+            </p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeModal('rejectModal')">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-danger" onclick="submitForm('rejectForm')">
+                Yes, Reject
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form handling with confirmation modals
+    document.addEventListener('DOMContentLoaded', function() {
+        const approveForm = document.getElementById('approveForm');
+        const rejectForm = document.getElementById('rejectForm');
+        const rejectTextarea = document.getElementById('admin_notes_reject');
+
+        if (approveForm) {
+            approveForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                showModal('approveModal');
+            });
+        }
+
+        if (rejectForm) {
+            rejectForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const reason = rejectTextarea.value.trim();
+
+                if (!reason) {
+                    rejectTextarea.focus();
+                    rejectTextarea.style.borderColor = 'var(--danger)';
+                    rejectTextarea.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+
+                    setTimeout(() => {
+                        rejectTextarea.style.borderColor = 'var(--glass)';
+                        rejectTextarea.style.boxShadow = 'none';
+                    }, 3000);
+                    return;
+                }
+
+                document.getElementById('rejectionReasonPreview').textContent = reason;
+                showModal('rejectModal');
+            });
+        }
+    });
+
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function submitForm(formId) {
+        const submitBtn = document.getElementById(formId === 'approveForm' ? 'approveBtn' : 'rejectBtn');
+        const originalContent = submitBtn.innerHTML;
+
+        // Show loading state
+        submitBtn.innerHTML = '<span class="loading"></span> Processing...';
+        submitBtn.disabled = true;
+
+        closeModal(formId === 'approveForm' ? 'approveModal' : 'rejectModal');
+
+        // Submit the form
+        document.getElementById(formId).submit();
+    }
+
+    // Close modals on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal('approveModal');
+            closeModal('rejectModal');
+        }
+    });
+
+    // Close modals when clicking outside
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+
+    // Add subtle animations to cards
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    // Observe all cards for animation
+    document.querySelectorAll('.card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+
+// Function to reassign 1Win account
+function reassignAccount(transactionId) {
+    if (confirm('Are you sure you want to reassign a different 1Win account to this transaction?\n\nThis will attempt to find an alternative account and update the transaction.')) {
+        fetch(`/admin/reassign-account/${transactionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Account reassigned successfully!\n\nNew account: ${data.account_username}\nProxy: ${data.proxy_ip || 'None'}`);
+                location.reload();
+            } else {
+                alert(`❌ Failed to reassign account:\n${data.message}`);
+            }
+        })
+        .catch(error => {
+            alert('❌ Error reassigning account. Please try again.');
+            console.error('Error:', error);
+        });
+    }
+}
+
+// Function to assign account if none assigned
+function assignAccount(transactionId) {
+    if (confirm('Attempt to assign a 1Win account to this transaction?\n\nThis will search for available accounts with sufficient balance.')) {
+        fetch(`/admin/assign-account/${transactionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Account assigned successfully!\n\nAccount: ${data.account_username}\nBalance: $${data.account_balance}\nProxy: ${data.proxy_ip || 'None'}`);
+                location.reload();
+            } else {
+                alert(`❌ Failed to assign account:\n${data.message}`);
+            }
+        })
+        .catch(error => {
+            alert('❌ Error assigning account. Please try again.');
+            console.error('Error:', error);
+        });
+    }
+}
+
+// Helper function to get CSRF token
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
+{% endblock %}

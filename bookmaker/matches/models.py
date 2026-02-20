@@ -7,6 +7,123 @@ from django.utils import timezone
 import datetime
 import math
 
+# Add this utility function at the top of the file (after imports, before classes)
+def check_bet_result(match, bet_type):
+    """
+    Determine if a bet on the given match with the given bet type would win.
+    match: a Match instance (must be finished with scores)
+    bet_type: string from Bet.BET_TYPE_CHOICES
+    Returns boolean.
+    """
+    home_score = match.home_score or 0
+    away_score = match.away_score or 0
+    total_goals = home_score + away_score
+
+    # Half-time result
+    ht_home = match.half_time_home_score or 0
+    ht_away = match.half_time_away_score or 0
+    ht_result = 'draw'
+    if ht_home > ht_away:
+        ht_result = 'home'
+    elif ht_away > ht_home:
+        ht_result = 'away'
+
+    # Full-time result
+    ft_result = 'draw'
+    if home_score > away_score:
+        ft_result = 'home'
+    elif away_score > home_score:
+        ft_result = 'away'
+
+    bet_checks = {
+        # Basic 1X2
+        'home': ft_result == 'home',
+        'draw': ft_result == 'draw',
+        'away': ft_result == 'away',
+
+        # Double Chance
+        '1x': ft_result in ['home', 'draw'],
+        '12': ft_result in ['home', 'away'],
+        'x2': ft_result in ['draw', 'away'],
+
+        # Total Goals
+        'over_1_5': total_goals > 1.5,
+        'under_1_5': total_goals < 1.5,
+        'over_2_5': total_goals > 2.5,
+        'under_2_5': total_goals < 2.5,
+        'over_3_5': total_goals > 3.5,
+        'under_3_5': total_goals < 3.5,
+
+        # Handicap
+        'handicap_home': (home_score - away_score) > 1.5,
+        'handicap_away': (away_score - home_score) > 1.5,
+
+        # BTTS
+        'btts_yes': home_score > 0 and away_score > 0,
+        'btts_no': home_score == 0 or away_score == 0,
+
+        # HT/FT
+        'htft_hh': ht_result == 'home' and ft_result == 'home',
+        'htft_hd': ht_result == 'home' and ft_result == 'draw',
+        'htft_ha': ht_result == 'home' and ft_result == 'away',
+        'htft_dh': ht_result == 'draw' and ft_result == 'home',
+        'htft_dd': ht_result == 'draw' and ft_result == 'draw',
+        'htft_da': ht_result == 'draw' and ft_result == 'away',
+        'htft_ah': ht_result == 'away' and ft_result == 'home',
+        'htft_ad': ht_result == 'away' and ft_result == 'draw',
+        'htft_aa': ht_result == 'away' and ft_result == 'away',
+
+        # Asian Handicap
+        'ah_home_minus_05': (home_score - away_score) > 0.5,
+        'ah_away_plus_05': (away_score - home_score) > -0.5,
+        'ah_home_minus_1': (home_score - away_score) > 1,
+        'ah_away_plus_1': (away_score - home_score) > -1,
+
+        # Correct Score
+        'cs_1_0': home_score == 1 and away_score == 0,
+        'cs_2_0': home_score == 2 and away_score == 0,
+        'cs_2_1': home_score == 2 and away_score == 1,
+        'cs_0_0': home_score == 0 and away_score == 0,
+        'cs_1_1': home_score == 1 and away_score == 1,
+        'cs_0_1': home_score == 0 and away_score == 1,
+        'cs_0_2': home_score == 0 and away_score == 2,
+        'cs_1_2': home_score == 1 and away_score == 2,
+
+        # Half Time
+        'ht_home': ht_result == 'home',
+        'ht_draw': ht_result == 'draw',
+        'ht_away': ht_result == 'away',
+
+        # Odd/Even
+        'odd': total_goals % 2 == 1,
+        'even': total_goals % 2 == 0,
+
+        # Draw No Bet (if draw, bet loses – no refund for simplicity)
+        'dnb_home': ft_result == 'home',
+        'dnb_away': ft_result == 'away',
+
+        # Win to Nil
+        'win_to_nil_home': ft_result == 'home' and away_score == 0,
+        'win_to_nil_away': ft_result == 'away' and home_score == 0,
+
+        # HT Double Chance
+        'ht_1x': ht_result in ['home', 'draw'],
+        'ht_12': ht_result in ['home', 'away'],
+        'ht_x2': ht_result in ['draw', 'away'],
+
+        # BTTS & Win
+        'btts_win_home': ft_result == 'home' and home_score > 0 and away_score > 0,
+        'btts_win_away': ft_result == 'away' and home_score > 0 and away_score > 0,
+
+        # Team Goals
+        'home_over_1_5': home_score > 1.5,
+        'home_under_1_5': home_score < 1.5,
+        'away_over_1_5': away_score > 1.5,
+        'away_under_1_5': away_score < 1.5,
+    }
+    return bet_checks.get(bet_type, False)
+
+
 
 class Bookmaker(models.Model):
     """
@@ -60,6 +177,9 @@ class Match(models.Model):
     league = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_UPCOMING)
     match_url = models.URLField(blank=True, null=True)
+
+    live_minute = models.CharField(max_length=10, blank=True, null=True,
+                                   help_text="Current minute for live matches (e.g., '45', 'HT')")
 
     # Timestamps
     scraped_at = models.DateTimeField(default=get_default_scraped_at, null=True, blank=True)
@@ -166,6 +286,83 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
+
+    def settle_bets(self):
+        from django.db import transaction
+        from accounts.models import Profile
+
+        if self.status != 'finished':
+            return
+
+        with transaction.atomic():
+            # --- Settle single bets ---
+            for bet in self.bets.filter(status='pending').select_for_update():
+                profile = Profile.objects.select_for_update().get(user=bet.user)
+
+                # Check for "Draw No Bet" Refund Scenario
+                is_draw = (self.home_score == self.away_score)
+                is_dnb_bet = bet.bet_type in [bet.BET_TYPE_DNB_HOME, bet.BET_TYPE_DNB_AWAY]
+
+                if is_dnb_bet and is_draw:
+                    bet.status = 'refunded'
+                    profile.balance += bet.amount  # Return the original stake only
+                elif bet.check_result():
+                    bet.status = 'won'
+                    profile.balance += bet.potential_payout
+                else:
+                    bet.status = 'lost'
+
+                bet.save()
+                profile.save()
+
+            # --- Settle express selections ---
+            selections = ExpressBetSelection.objects.filter(
+                match=self, status='pending'
+            ).select_related('express_bet').select_for_update()
+
+            express_bets_to_check = set()
+            for sel in selections:
+                # Check for Draw No Bet refund inside an express bet
+                is_dnb_bet = sel.bet_type in [Bet.BET_TYPE_DNB_HOME, Bet.BET_TYPE_DNB_AWAY]
+                is_draw = (self.home_score == self.away_score)
+
+                if is_dnb_bet and is_draw:
+                    sel.status = 'refunded'  # A refunded selection usually means odds become 1.0 for this leg
+                elif sel.check_result():
+                    sel.status = 'won'
+                else:
+                    sel.status = 'lost'
+                sel.save()
+                express_bets_to_check.add(sel.express_bet_id)
+
+            # --- Settle affected express bets ---
+            for eb_id in express_bets_to_check:
+                eb = ExpressBet.objects.select_for_update().get(id=eb_id)
+
+                # Only process if all selections are resolved (no pending)
+                if eb.selections.filter(status='pending').exists():
+                    continue
+
+                profile = Profile.objects.select_for_update().get(user=eb.user)
+
+                if eb.selections.filter(status='lost').exists():
+                    eb.status = 'lost'
+                else:
+                    # If it's not lost, it's a mix of won/refunded.
+                    eb.status = 'won'
+
+                    # Recalculate total odds for the express ticket (ignoring refunded legs)
+                    final_odds = Decimal('1.00')
+                    for leg in eb.selections.all():
+                        if leg.status == 'won':
+                            final_odds *= leg.odds
+                        # If refunded, odds for that leg act as 1.00, so we don't multiply
+
+                    actual_payout = eb.amount * final_odds
+                    profile.balance += actual_payout
+
+                eb.save()
+                profile.save()
 
     def save(self, *args, **kwargs):
         # Update total goals if scores are available
@@ -617,19 +814,6 @@ class Match(models.Model):
 
         return available
 
-    def settle_bets(self):
-        """Settle all pending bets for this match"""
-        if self.status != 'finished':
-            return
-
-        pending_bets = self.bets.filter(status='pending')
-        for bet in pending_bets:
-            if bet.check_result():
-                bet.status = 'won'
-            else:
-                bet.status = 'lost'
-            bet.save()
-
 
 class Odds(models.Model):
     """
@@ -882,11 +1066,13 @@ class Bet(models.Model):
     STATUS_PENDING = 'pending'
     STATUS_WON = 'won'
     STATUS_LOST = 'lost'
+    STATUS_REFUNDED = 'refunded'  # <--- ADD THIS
 
     STATUS_CHOICES = [
         (STATUS_PENDING, 'Pending'),
         (STATUS_WON, 'Won'),
         (STATUS_LOST, 'Lost'),
+        (STATUS_REFUNDED, 'Refunded'),  # <--- ADD THIS
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bets')
@@ -906,6 +1092,11 @@ class Bet(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.match} - {self.amount} on {self.bet_type}"
+
+    def check_result(self):
+        if self.match.status != 'finished':
+            return False
+        return check_bet_result(self.match, self.bet_type)
 
     def save(self, *args, **kwargs):
         # Calculate potential payout
@@ -1082,6 +1273,15 @@ class ExpressBetSelection(models.Model):
     bet_type = models.CharField(max_length=30)  # Using the same bet types as Bet model
     odds = models.DecimalField(max_digits=6, decimal_places=2)
     status = models.CharField(max_length=10, default='pending')  # pending, won, lost
+
+    def check_result(self):
+        if self.match.status != 'finished':
+            return False
+        return check_bet_result(self.match, self.bet_type)
+
+    @property
+    def get_bet_type_display(self):
+        return dict(Bet.BET_TYPE_CHOICES).get(self.bet_type, self.bet_type)
 
     def __str__(self):
         return f"{self.match} - {self.bet_type}"

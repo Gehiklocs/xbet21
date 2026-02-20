@@ -1,64 +1,1046 @@
 {% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-8">
-    <h2 class="text-3xl font-bold text-white">Transaction History</h2>
-</div>
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-glow: #818cf8;
+        --secondary: #06d6a0;
+        --dark: #0f172a;
+        --darker: #020617;
+        --card-bg: rgba(30, 41, 59, 0.6);
+        --glass: rgba(255, 255, 255, 0.05);
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+    }
 
-<div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left">
-            <thead>
-                <tr class="bg-slate-800/50 text-slate-400 text-sm uppercase">
-                    <th class="px-6 py-4 font-semibold">ID</th>
-                    <th class="px-6 py-4 font-semibold">User</th>
-                    <th class="px-6 py-4 font-semibold">Type</th>
-                    <th class="px-6 py-4 font-semibold">Amount</th>
-                    <th class="px-6 py-4 font-semibold">Address</th>
-                    <th class="px-6 py-4 font-semibold">Status</th>
-                    <th class="px-6 py-4 font-semibold">Date</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800">
-                {% for tx in transactions %}
-                <tr class="hover:bg-slate-800/30 transition">
-                    <td class="px-6 py-4 text-slate-500">#{{ tx.id }}</td>
-                    <td class="px-6 py-4 font-medium text-white">{{ tx.user.username }}</td>
-                    <td class="px-6 py-4 text-slate-300">{{ tx.crypto_type }}</td>
-                    <td class="px-6 py-4 font-mono text-emerald-400">{{ tx.amount }}</td>
-                    <td class="px-6 py-4 text-slate-500 font-mono text-xs">{{ tx.deposit_address }}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 rounded-full text-xs font-bold
-                            {% if tx.status == 'pending' %}bg-yellow-500/10 text-yellow-500
-                            {% elif tx.status == 'confirmed' %}bg-emerald-500/10 text-emerald-500
-                            {% else %}bg-red-500/10 text-red-500{% endif %}">
-                            {{ tx.status|title }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-slate-500 text-sm">{{ tx.created_at|date:"M d, H:i" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-slate-500">No transactions found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-    <!-- Pagination -->
-    {% if transactions.has_other_pages %}
-    <div class="px-6 py-4 border-t border-slate-800 flex justify-center">
-        <div class="flex gap-2">
-            {% if transactions.has_previous %}
-            <a href="?page={{ transactions.previous_page_number }}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Prev</a>
-            {% endif %}
-            <span class="px-3 py-1 text-slate-500">Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}</span>
-            {% if transactions.has_next %}
-            <a href="?page={{ transactions.next_page_number }}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Next</a>
-            {% endif %}
+    body {
+        background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+        color: var(--text);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        min-height: 100vh;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon.card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(129, 140, 248, 0.1));
+        color: var(--primary);
+    }
+
+    .stat-icon.crypto {
+        background: linear-gradient(135deg, rgba(6, 214, 160, 0.1), rgba(16, 185, 129, 0.1));
+        color: var(--secondary);
+    }
+
+    .stat-icon.pending {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+        color: var(--warning);
+    }
+
+    .stat-icon.revenue {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(248, 113, 113, 0.1));
+        color: var(--danger);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+
+    .stat-change.positive {
+        background: rgba(6, 214, 160, 0.1);
+        color: var(--secondary);
+    }
+
+    .stat-change.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--glass);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+
+    .filter-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .date-filter {
+        background: var(--glass);
+        border: 1px solid var(--glass);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.95rem;
+        min-width: 150px;
+    }
+
+    .date-filter:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* Transaction Tables */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: var(--primary);
+    }
+
+    .transaction-count {
+        background: var(--glass);
+        color: var(--text-muted);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Table Container */
+    .table-container {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .transaction-table thead {
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid var(--glass);
+    }
+
+    .transaction-table th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .transaction-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        transition: background 0.2s ease;
+    }
+
+    .transaction-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .transaction-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-table td {
+        padding: 1rem 1.5rem;
+        color: var(--text);
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+
+    /* Table Elements */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .user-email {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .amount-cell {
+        font-family: 'Roboto Mono', monospace;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .amount-positive {
+        color: var(--secondary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .status-pending-approval {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    .status-confirmed {
+        background: rgba(6, 214, 160, 0.1);
+        color: var(--secondary);
+        border: 1px solid rgba(6, 214, 160, 0.2);
+    }
+
+    .status-canceled {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-failed {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .action-cell {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .action-btn-review {
+        background: linear-gradient(135deg, var(--warning), #fbbf24);
+        color: white;
+    }
+
+    .action-btn-review:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    }
+
+    .action-btn-details {
+        background: var(--glass);
+        color: var(--text);
+        border: 1px solid var(--glass);
+    }
+
+    .action-btn-details:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--glass);
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        background: var(--glass);
+        color: var(--text);
+        border: 1px solid var(--glass);
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+    }
+
+    .pagination-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination-info {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        padding: 0 1rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .filter-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .date-filter {
+            flex: 1;
+            min-width: auto;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-card {
+            padding: 1.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .transaction-count {
+            align-self: flex-start;
+        }
+
+        .transaction-table th,
+        .transaction-table td {
+            padding: 0.875rem 1rem;
+        }
+
+        .action-cell {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .user-cell {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .transaction-table th,
+        .transaction-table td {
+            padding: 0.75rem 0.875rem;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .amount-cell {
+            font-size: 1rem;
+        }
+    }
+
+    /* Loading Animation */
+    .loading-shimmer {
+        background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.05) 25%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(255, 255, 255, 0.05) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+</style>
+
+<div class="admin-dashboard">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Transaction History</h1>
+        <div class="filter-controls">
+            <select class="date-filter" id="dateFilter">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">This Month</option>
+                <option value="all" selected>All Time</option>
+            </select>
+            <button onclick="exportData()" class="action-btn action-btn-details">
+                <i class="fas fa-download"></i>
+                Export
+            </button>
         </div>
     </div>
-    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <!-- Card Transactions -->
+        <div class="stat-card">
+            <div class="stat-icon card">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="stat-value">{{ card_total|default:0 }}</div>
+            <div class="stat-label">Card Transactions</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                {{ card_growth|default:"0" }}% this month
+            </div>
+        </div>
+
+        <!-- Crypto Transactions -->
+        <div class="stat-card">
+            <div class="stat-icon crypto">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="stat-value">{{ crypto_total|default:0 }}</div>
+            <div class="stat-label">Crypto Transactions</div>
+            <div class="stat-change {% if crypto_growth and crypto_growth >= 0 %}positive{% else %}negative{% endif %}">
+                <i class="fas fa-arrow-{% if crypto_growth and crypto_growth >= 0 %}up{% else %}down{% endif %}"></i>
+                {{ crypto_growth|default:"0" }}% this month
+            </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="stat-card">
+            <div class="stat-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ pending_approvals|default:0 }}</div>
+            <div class="stat-label">Pending Approvals</div>
+            <a href="?status=pending_approval" class="action-btn action-btn-review" style="margin-top: 0.5rem; padding: 0.5rem;">
+                <i class="fas fa-eye"></i>
+                View All
+            </a>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="stat-card">
+            <div class="stat-icon revenue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value">${{ total_revenue|floatformat:2|default:"0.00" }}</div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                {{ revenue_growth|default:"0" }}% from last month
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Transactions Section -->
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-credit-card"></i>
+            Card Transactions
+            <span class="transaction-count">{{ card_transactions|length }} transactions</span>
+        </h2>
+        <div class="filter-controls">
+            <select class="date-filter" id="cardStatusFilter">
+                <option value="">All Status</option>
+                <option value="pending_approval">Pending Approval</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="canceled">Canceled</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Card</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in card_transactions %}
+                    <tr>
+                        <td>
+                            <span style="color: var(--text-muted); font-family: 'Roboto Mono', monospace;">#{{ tx.id }}</span>
+                        </td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    {{ tx.user.username|first|upper }}
+                                </div>
+                                <div class="user-info">
+                                    <span class="user-name">{{ tx.user.username }}</span>
+                                    <span class="user-email">{{ tx.user.email|default:"No email" }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-family: 'Roboto Mono', monospace; color: var(--text-muted);">
+                                {{ tx.card_number }}
+                            </span>
+                        </td>
+                        <td class="amount-cell amount-positive">
+                            {{ tx.amount }} {{tx.currency}}
+                        </td>
+                        <td>
+                            <span class="status-badge
+                                {% if tx.status == 'pending_approval' %}status-pending-approval
+                                {% elif tx.status == 'confirmed' %}status-confirmed
+                                {% elif tx.status == 'canceled' %}status-canceled
+                                {% else %}status-pending{% endif %}">
+                                <i class="fas
+                                    {% if tx.status == 'pending_approval' %}fa-user-shield
+                                    {% elif tx.status == 'confirmed' %}fa-check-circle
+                                    {% elif tx.status == 'canceled' %}fa-times-circle
+                                    {% else %}fa-clock{% endif %}">
+                                </i>
+                                {{ tx.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>{{ tx.created_at|date:"M d, Y" }}</span>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                    {{ tx.created_at|date:"h:i A" }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-cell">
+                                {% if tx.status == 'pending_approval' %}
+                                <a href="{% url 'admin_transaction_detail' tx.id %}" class="action-btn action-btn-review">
+                                    <i class="fas fa-eye"></i>
+                                    Review
+                                </a>
+                                {% else %}
+                                <a href="{% url 'admin_transaction_detail' tx.id %}" class="action-btn action-btn-details">
+                                    <i class="fas fa-info-circle"></i>
+                                    Details
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fas fa-credit-card"></i>
+                                <h3>No Card Transactions</h3>
+                                <p>No card transactions found in the selected period.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Crypto Transactions Section -->
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-coins"></i>
+            Crypto Transactions
+            <span class="transaction-count">{{ transactions|length }} transactions</span>
+        </h2>
+        <div class="filter-controls">
+            <select class="date-filter" id="cryptoTypeFilter">
+                <option value="">All Types</option>
+                <option value="BTC">Bitcoin</option>
+                <option value="ETH">Ethereum</option>
+                <option value="USDT">USDT</option>
+                <option value="LTC">Litecoin</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td>
+                            <span style="color: var(--text-muted); font-family: 'Roboto Mono', monospace;">#{{ tx.id }}</span>
+                        </td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    {{ tx.user.username|first|upper }}
+                                </div>
+                                <div class="user-info">
+                                    <span class="user-name">{{ tx.user.username }}</span>
+                                    <span class="user-email">{{ tx.user.email|default:"No email" }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="color: var(--text); font-weight: 600;">
+                                {{ tx.crypto_type }}
+                            </span>
+                        </td>
+                        <td class="amount-cell amount-positive">
+                            {{ tx.amount }} {{ tx.crypto_type }}
+                        </td>
+                        <td>
+                            <div style="font-family: 'Roboto Mono', monospace; font-size: 0.85rem; color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="{{ tx.deposit_address }}">
+                                {{ tx.deposit_address|truncatechars:20 }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge
+                                {% if tx.status == 'pending' %}status-pending
+                                {% elif tx.status == 'confirmed' %}status-confirmed
+                                {% elif tx.status == 'canceled' %}status-canceled
+                                {% else %}status-pending{% endif %}">
+                                <i class="fas
+                                    {% if tx.status == 'pending' %}fa-clock
+                                    {% elif tx.status == 'confirmed' %}fa-check-circle
+                                    {% elif tx.status == 'canceled' %}fa-times-circle
+                                    {% else %}fa-info-circle{% endif %}">
+                                </i>
+                                {{ tx.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column;">
+                                <span>{{ tx.created_at|date:"M d, Y" }}</span>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                    {{ tx.created_at|date:"h:i A" }}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fas fa-coins"></i>
+                                <h3>No Crypto Transactions</h3>
+                                <p>No crypto transactions found in the selected period.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if transactions.has_other_pages %}
+        <div class="pagination">
+            {% if transactions.has_previous %}
+            <a href="?page={{ transactions.previous_page_number }}" class="pagination-btn">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </a>
+            {% else %}
+            <span class="pagination-btn disabled">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </span>
+            {% endif %}
+
+            <span class="pagination-info">
+                Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}
+            </span>
+
+            {% if transactions.has_next %}
+            <a href="?page={{ transactions.next_page_number }}" class="pagination-btn">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="pagination-btn disabled">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
 </div>
+
+<script>
+    // Filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateFilter = document.getElementById('dateFilter');
+        const cardStatusFilter = document.getElementById('cardStatusFilter');
+        const cryptoTypeFilter = document.getElementById('cryptoTypeFilter');
+
+        // Store current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Set initial values from URL
+        if (urlParams.has('period')) {
+            dateFilter.value = urlParams.get('period');
+        }
+        if (urlParams.has('card_status')) {
+            cardStatusFilter.value = urlParams.get('card_status');
+        }
+        if (urlParams.has('crypto_type')) {
+            cryptoTypeFilter.value = urlParams.get('crypto_type');
+        }
+
+        // Filter change handlers
+        function updateFilters() {
+            const params = new URLSearchParams();
+
+            // Add existing parameters
+            urlParams.forEach((value, key) => {
+                if (!['period', 'card_status', 'crypto_type', 'page'].includes(key)) {
+                    params.append(key, value);
+                }
+            });
+
+            // Add new filter values
+            if (dateFilter.value && dateFilter.value !== 'all') {
+                params.append('period', dateFilter.value);
+            }
+            if (cardStatusFilter.value) {
+                params.append('card_status', cardStatusFilter.value);
+            }
+            if (cryptoTypeFilter.value) {
+                params.append('crypto_type', cryptoTypeFilter.value);
+            }
+
+            // Update URL without page reload (for demo)
+            // In production, you would redirect to the new URL
+            console.log('Filters updated:', params.toString());
+            // window.location.search = params.toString();
+        }
+
+        dateFilter.addEventListener('change', updateFilters);
+        cardStatusFilter.addEventListener('change', updateFilters);
+        cryptoTypeFilter.addEventListener('change', updateFilters);
+    });
+
+    // Export functionality
+    function exportData() {
+        // Show loading state
+        const exportBtn = document.querySelector('[onclick="exportData()"]');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        exportBtn.disabled = true;
+
+        // Simulate export process
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+
+            // Show success message
+            showNotification('Data exported successfully!', 'success');
+        }, 1500);
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            background: ${type === 'success' ? 'rgba(6, 214, 160, 0.1)' : 'rgba(99, 102, 241, 0.1)'};
+            color: ${type === 'success' ? '#06d6a0' : '#6366f1'};
+            border: 1px solid ${type === 'success' ? 'rgba(6, 214, 160, 0.2)' : 'rgba(99, 102, 241, 0.2)'};
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        `;
+
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+            ${message}
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Add CSS for animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Responsive table improvements
+    function checkTableWidth() {
+        const tables = document.querySelectorAll('.table-wrapper');
+        tables.forEach(wrapper => {
+            const table = wrapper.querySelector('table');
+            if (table.scrollWidth > wrapper.clientWidth) {
+                wrapper.style.overflowX = 'auto';
+            } else {
+                wrapper.style.overflowX = 'visible';
+            }
+        });
+    }
+
+    // Check on load and resize
+    window.addEventListener('load', checkTableWidth);
+    window.addEventListener('resize', checkTableWidth);
+
+    // Auto-refresh for pending approvals
+    function autoRefreshPending() {
+        const pendingCount = document.querySelector('.stat-card:nth-child(3) .stat-value');
+        if (pendingCount && parseInt(pendingCount.textContent) > 0) {
+            // Simulate checking for new pending approvals every 30 seconds
+            setInterval(() => {
+                // In production, this would make an AJAX request
+                console.log('Checking for new pending approvals...');
+            }, 30000);
+        }
+    }
+
+    // Start auto-refresh if there are pending approvals
+    autoRefreshPending();
+</script>
 {% endblock %}

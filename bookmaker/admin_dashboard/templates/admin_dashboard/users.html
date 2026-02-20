@@ -5,6 +5,16 @@
     <h2 class="text-3xl font-bold text-white">User Management</h2>
 </div>
 
+<!-- Search Bar -->
+<div class="mb-6">
+    <form method="get" action="{% url 'admin_users' %}">
+        <div class="relative">
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search by username or email..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition pl-10">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+    </form>
+</div>
+
 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -32,6 +42,10 @@
                         <a href="{% url 'admin_user_edit' user.id %}" class="text-indigo-400 hover:text-indigo-300 mr-3">Edit</a>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-slate-500">No users found for your query.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -42,11 +56,11 @@
     <div class="px-6 py-4 border-t border-slate-800 flex justify-center">
         <div class="flex gap-2">
             {% if users.has_previous %}
-            <a href="?page={{ users.previous_page_number }}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Prev</a>
+            <a href="?page={{ users.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Prev</a>
             {% endif %}
             <span class="px-3 py-1 text-slate-500">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
             {% if users.has_next %}
-            <a href="?page={{ users.next_page_number }}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Next</a>
+            <a href="?page={{ users.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="px-3 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Next</a>
             {% endif %}
         </div>
     </div>

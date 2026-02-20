@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from accounts.models import Profile, Wallet
-from matches.models import Match
+from django.contrib.auth.models import Group
+from accounts.models import Profile, Wallet, Proxy, OneWinAccount
+from matches.models import Match, Team, Bookmaker
+from django_q.models import Schedule
 
 User = get_user_model()
 
@@ -10,10 +12,11 @@ class UserEditForm(forms.ModelForm):
     full_name = forms.CharField(max_length=200, required=False)
     balance = forms.DecimalField(max_digits=12, decimal_places=2, required=False)
     country = forms.ChoiceField(choices=Profile.COUNTRIES, required=False)
+    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False, widget=forms.CheckboxSelectMultiple)
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
+        fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser', 'groups']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,6 +33,7 @@ class UserEditForm(forms.ModelForm):
         user = super().save(commit=False)
         if commit:
             user.save()
+            self.save_m2m() # Save groups
             # Save profile data
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.full_name = self.cleaned_data['full_name']
@@ -54,3 +58,39 @@ class MatchEditForm(forms.ModelForm):
         widgets = {
             'match_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
+class TeamForm(forms.ModelForm):
+    class Meta:
+        model = Team
+        fields = ['name', 'logo_url']
+
+class BookmakerForm(forms.ModelForm):
+    class Meta:
+        model = Bookmaker
+        fields = ['name', 'website']
+
+class ScheduleForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = ['name', 'func', 'schedule_type', 'minutes', 'repeats', 'next_run']
+        widgets = {
+            'next_run': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ['name', 'permissions']
+        widgets = {
+            'permissions': forms.SelectMultiple(attrs={'class': 'h-64'}),
+        }
+
+class ProxyForm(forms.ModelForm):
+    class Meta:
+        model = Proxy
+        fields = ['name', 'ip', 'port', 'type', 'username', 'password', 'country', 'max_uses', 'current_uses', 'is_active', 'notes']
+
+class OneWinAccountForm(forms.ModelForm):
+    class Meta:
+        model = OneWinAccount
+        fields = ['username', 'password', 'email', 'phone_number', 'proxy', 'balance', 'daily_limit', 'status', 'total_used', 'notes']

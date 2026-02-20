@@ -63,7 +63,7 @@ class CustomScheduleAdmin(admin.ModelAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'logo_preview')
     search_fields = ('name',)
-    
+
     def logo_preview(self, obj):
         if obj.logo_url:
             return format_html('<img src="{}" width="30" height="30" style="object-fit: contain;" />', obj.logo_url)

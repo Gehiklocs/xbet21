@@ -1,25 +1,67 @@
 {% include 'includes/header.html' %}
-
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
+    :root {
+        --primary: #6366f1;
+        --secondary: #06d6a0;
+        --text-muted: #94a3b8;
+        --gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --bonus-color: #f59e0b;
+        --error-color: #ef4444;
+        --success-color: #10b981;
+    }
+
+    /* Base responsive improvements */
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
     .balance-page-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem;
+        padding: 1.5rem;
+        min-height: calc(100vh - 160px);
         display: grid;
         grid-template-columns: 1fr 1.5fr;
         gap: 2rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .balance-card-modern {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        background: var(--glass-bg);
         backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
         border-radius: 24px;
-        padding: 2.5rem;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        padding: 2rem;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.03),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
         position: relative;
         overflow: hidden;
         height: fit-content;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .balance-card-modern:hover {
+        transform: translateY(-5px);
     }
 
     .balance-card-modern::before {
@@ -27,152 +69,322 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(99, 102, 241, 0.4) 50%,
+            transparent 100%);
+    }
+
+    .balance-card-modern::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+        z-index: -1;
     }
 
     .balance-title {
         font-size: 1.5rem;
         font-weight: 800;
-        color: white;
+        background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-bottom: 0.5rem;
+        letter-spacing: -0.5px;
     }
 
     .balance-subtitle {
         color: var(--text-muted);
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         margin-bottom: 2rem;
+        font-weight: 500;
+        line-height: 1.4;
     }
 
     .current-balance-box {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 16px;
+        background: linear-gradient(135deg,
+            rgba(15, 23, 42, 0.6) 0%,
+            rgba(30, 41, 59, 0.8) 100%);
+        border-radius: 20px;
         padding: 1.5rem;
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
         margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
     }
 
     .balance-label {
         color: var(--text-muted);
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         font-weight: 600;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
         display: block;
     }
 
     .balance-amount {
         font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--secondary), #10b981);
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-family: 'Courier New', monospace;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: -1px;
+        line-height: 1;
+        margin: 0.75rem 0;
+        text-shadow: 0 2px 10px rgba(6, 214, 160, 0.2);
     }
 
     .balance-currency {
-        font-size: 1.2rem;
+        font-size: 0.9rem;
         color: var(--text-muted);
         font-weight: 600;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.4rem 1.25rem;
+        border-radius: 50px;
+        display: inline-block;
+        backdrop-filter: blur(10px);
     }
 
     .deposit-section {
-        background: rgba(30, 41, 59, 0.6);
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
         border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
         padding: 2rem;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        position: relative;
+        overflow: hidden;
     }
 
-    .tabs {
-        display: flex;
-        gap: 1rem;
+    .deposit-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(6, 214, 160, 0.4) 50%,
+            transparent 100%);
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
         margin-bottom: 2rem;
-        background: rgba(15, 23, 42, 0.6);
-        padding: 0.5rem;
-        border-radius: 16px;
     }
 
-    .tab-btn {
-        flex: 1;
-        padding: 1rem;
-        border: none;
-        background: transparent;
-        color: var(--text-muted);
-        font-weight: 600;
-        cursor: pointer;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+    .payment-method-btn {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1.25rem 1rem;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        min-height: 100px;
     }
 
-    .tab-btn.active {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    .payment-method-btn.active {
+        background: rgba(99, 102, 241, 0.1);
+        border-color: rgba(99, 102, 241, 0.3);
     }
 
-    .tab-btn:hover:not(.active) {
+    .payment-method-btn:hover:not(.active) {
         background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .crypto-icon {
+        color: #f59e0b;
+    }
+
+    .card-icon {
+        color: #06d6a0;
+    }
+
+    .payment-label {
+        font-weight: 700;
         color: white;
+        font-size: 1rem;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .bonus-badge {
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        color: #0f172a;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.25rem;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
     }
 
     .form-group {
         margin-bottom: 1.5rem;
+        animation: slideUp 0.4s ease-out;
+        position: relative;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .form-label {
         display: block;
         color: var(--text-muted);
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .form-label .min-amount {
+        color: var(--secondary);
+        font-weight: 700;
+        background: rgba(6, 214, 160, 0.1);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
     }
 
     .modern-input, .modern-select {
         width: 100%;
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
         border-radius: 12px;
-        padding: 1rem;
+        padding: 1rem 1.25rem;
         color: white;
         font-size: 1rem;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Inter', sans-serif;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .modern-input:focus, .modern-select:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        box-shadow:
+            0 0 0 4px rgba(99, 102, 241, 0.1),
+            0 10px 20px rgba(0, 0, 0, 0.2);
+        transform: translateY(-1px);
+    }
+
+    /* Input validation states */
+    .modern-input.valid {
+        border-color: var(--success-color);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .modern-input.invalid {
+        border-color: var(--error-color);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    /* Validation icons */
+    .input-container {
+        position: relative;
+    }
+
+    .validation-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+
+    .validation-icon.valid {
+        color: var(--success-color);
+        opacity: 1;
+    }
+
+    .validation-icon.invalid {
+        color: var(--error-color);
+        opacity: 1;
     }
 
     .submit-btn {
         width: 100%;
-        background: linear-gradient(135deg, var(--secondary), #059669);
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
         color: white;
         border: none;
         padding: 1.2rem;
-        border-radius: 12px;
-        font-size: 1.1rem;
+        border-radius: 14px;
+        font-size: 1rem;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 1.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.75rem;
-        box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+        gap: 0.5rem;
+        box-shadow:
+            0 4px 20px rgba(6, 214, 160, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+        position: relative;
+        overflow: hidden;
+        min-height: 56px;
     }
 
-    .submit-btn:hover {
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none;
+    }
+
+    .submit-btn:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(6, 214, 160, 0.4);
+        box-shadow:
+            0 6px 25px rgba(6, 214, 160, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     .tx-history {
@@ -180,93 +392,810 @@
     }
 
     .tx-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: white;
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        letter-spacing: -0.3px;
     }
 
     .tx-list {
         display: grid;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .tx-item {
         background: rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.2s ease;
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
-    }
-
-    .tx-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateX(5px);
+        position: relative;
+        overflow: hidden;
     }
 
     .tx-amount {
         font-weight: 700;
         color: white;
-        font-size: 1.1rem;
+        font-size: 1rem;
+        letter-spacing: -0.3px;
     }
 
     .tx-date {
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
     }
 
     .tx-status {
         padding: 0.25rem 0.75rem;
         border-radius: 50px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
     }
-
-    .status-pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
-    .status-confirmed { background: rgba(6, 214, 160, 0.1); color: #06d6a0; border: 1px solid rgba(6, 214, 160, 0.2); }
 
     .alert-box {
         padding: 1rem;
-        border-radius: 12px;
+        border-radius: 14px;
         margin-bottom: 1.5rem;
         font-weight: 600;
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        border: 1px solid transparent;
+        font-size: 0.9rem;
     }
 
-    .alert-error {
-        background: rgba(239, 68, 68, 0.1);
-        color: #fca5a5;
-        border: 1px solid rgba(239, 68, 68, 0.2);
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    .alert-success {
+    .bonus-notice {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideUp 0.6s ease-out 0.2s both;
+    }
+
+    .bonus-notice i {
+        color: #f59e0b;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .bonus-notice-content h4 {
+        color: #f59e0b;
+        margin-bottom: 0.25rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .bonus-notice-content p {
+        color: rgba(245, 158, 11, 0.8);
+        font-size: 0.85rem;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .min-amount-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(6, 214, 160, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--secondary);
+        line-height: 1.3;
+    }
+
+    .min-amount-info i {
+        color: var(--secondary);
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    /* Card Payment Specific Styles */
+    .card-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .card-form-grid .form-group {
+        margin-bottom: 0;
+    }
+
+    .card-preview {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-radius: 14px;
+        padding: 1.25rem;
+        border: 1px solid var(--glass-border);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        font-family: 'Courier New', monospace;
+    }
+
+    .card-brand {
+        display: flex;
+        justify-content: flex-end;
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+
+    .card-chip {
+        width: 40px;
+        height: 32px;
+        background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-number {
+        font-family: 'Courier New', monospace;
+        font-size: 1.25rem;
+        letter-spacing: 1px;
+        color: white;
+        margin-bottom: 0.5rem;
+        word-spacing: 2px;
+    }
+
+    .card-details {
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .card-holder, .card-expiry {
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    /* Card type styling */
+    .card-preview.visa {
+        border-color: rgba(26, 35, 126, 0.3);
+    }
+
+    .card-preview.mastercard {
+        border-color: rgba(233, 30, 99, 0.3);
+    }
+
+    .card-preview.amex {
+        border-color: rgba(33, 150, 243, 0.3);
+    }
+
+    .card-preview.discover {
+        border-color: rgba(255, 152, 0, 0.3);
+    }
+
+    /* Validation status */
+    .validation-status {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .validation-status.valid {
         background: rgba(6, 214, 160, 0.1);
         color: var(--secondary);
-        border: 1px solid rgba(6, 214, 160, 0.2);
+        border-left: 3px solid var(--secondary);
     }
 
+    .validation-status.invalid {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error-color);
+        border-left: 3px solid var(--error-color);
+    }
+
+    /* Amount validation styles */
+    .amount-container {
+        position: relative;
+    }
+
+    .currency-prefix {
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-weight: 600;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .currency-prefix + .modern-input {
+        padding-left: 2.25rem;
+        padding-right: 3rem;
+    }
+
+    .amount-hint {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        text-align: right;
+    }
+
+    /* Submit button loading state */
+    .submit-btn.loading {
+        pointer-events: none;
+    }
+
+    .submit-btn.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* ===== RESPONSIVE BREAKPOINTS ===== */
+
+    /* Tablets and small desktops (900px and below) */
     @media (max-width: 900px) {
         .balance-page-container {
             grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+        }
+
+        .payment-methods {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .card-form-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1.75rem;
+        }
+    }
+
+    /* Large phones and small tablets (768px and below) */
+    @media (max-width: 768px) {
+        .balance-page-container {
+            min-height: calc(100vh - 140px);
+        }
+
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2.25rem;
+        }
+
+        .balance-title {
+            font-size: 1.4rem;
+        }
+
+        .payment-methods {
+            gap: 0.75rem;
+        }
+
+        .payment-method-btn {
+            padding: 1rem 0.75rem;
+            min-height: 90px;
+        }
+
+        .payment-icon {
+            font-size: 1.5rem;
+        }
+
+        .payment-label {
+            font-size: 0.95rem;
+        }
+
+        .bonus-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        .submit-btn {
+            padding: 1.1rem;
+            font-size: 0.95rem;
+        }
+
+        .validation-icon {
+            right: 0.75rem;
+        }
+    }
+
+    /* Medium phones (600px and below) */
+    @media (max-width: 600px) {
+        html {
+            font-size: 15px;
+        }
+
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1.25rem;
+            border-radius: 20px;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+        }
+
+        .current-balance-box {
+            padding: 1.25rem;
+        }
+
+        .payment-methods {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .payment-method-btn {
+            min-height: 85px;
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: 1rem 1.25rem;
+            text-align: left;
+        }
+
+        .payment-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0;
+            margin-right: 0.75rem;
+        }
+
+        .payment-label {
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .bonus-badge {
+            margin-top: 0;
+            margin-left: auto;
+        }
+
+        .modern-input, .modern-select {
+            padding: 0.9rem 1.1rem;
+            font-size: 0.95rem;
+        }
+
+        .currency-prefix + .modern-input {
+            padding-left: 2rem;
+            padding-right: 2.5rem;
+        }
+
+        .validation-icon {
+            right: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .card-preview {
+            padding: 1rem;
+        }
+
+        .card-number {
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .tx-item {
+            padding: 0.875rem;
+        }
+
+        .tx-amount {
+            font-size: 0.95rem;
+        }
+
+        .tx-status {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+        }
+    }
+
+    /* Small phones (480px and below) */
+    @media (max-width: 480px) {
+        html {
+            font-size: 14px;
+        }
+
+        .balance-page-container {
+            padding: 0.75rem;
+            gap: 1rem;
+        }
+
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1.25rem 1rem;
+            border-radius: 18px;
+        }
+
+        .balance-title {
+            font-size: 1.3rem;
+        }
+
+        .balance-subtitle {
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 1.75rem;
+        }
+
+        .balance-currency {
+            font-size: 0.85rem;
+            padding: 0.35rem 1rem;
+        }
+
+        .payment-method-btn {
+            padding: 0.875rem 1rem;
+            min-height: 80px;
+        }
+
+        .payment-icon {
+            font-size: 1.4rem;
+            margin-right: 0.5rem;
+        }
+
+        .payment-label {
+            font-size: 0.9rem;
+        }
+
+        .bonus-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .bonus-notice {
+            padding: 0.875rem;
+            gap: 0.5rem;
+        }
+
+        .bonus-notice i {
+            font-size: 1.1rem;
+        }
+
+        .bonus-notice-content h4 {
+            font-size: 0.9rem;
+        }
+
+        .bonus-notice-content p {
+            font-size: 0.8rem;
+        }
+
+        .modern-input, .modern-select {
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+        }
+
+        .currency-prefix {
+            left: 1rem;
+        }
+
+        .currency-prefix + .modern-input {
+            padding-left: 1.75rem;
+            padding-right: 2.25rem;
+        }
+
+        .submit-btn {
+            padding: 1rem;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            min-height: 52px;
+        }
+
+        .card-preview {
+            padding: 0.875rem;
+            border-radius: 12px;
+        }
+
+        .card-number {
+            font-size: 1rem;
+        }
+
+        .card-chip {
+            width: 35px;
+            height: 28px;
+        }
+
+        .tx-title {
+            font-size: 1rem;
+        }
+
+        .tx-item {
+            padding: 0.75rem;
+            border-radius: 12px;
+        }
+
+        .tx-amount {
+            font-size: 0.9rem;
+        }
+
+        .tx-date {
+            font-size: 0.75rem;
+        }
+
+        .alert-box {
+            padding: 0.875rem;
+            font-size: 0.85rem;
+            border-radius: 12px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+        }
+
+        .form-label .min-amount {
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+        }
+
+        .validation-icon {
+            right: 0.75rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Very small phones (360px and below) */
+    @media (max-width: 360px) {
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1rem 0.875rem;
+        }
+
+        .balance-title {
+            font-size: 1.2rem;
+        }
+
+        .balance-amount {
+            font-size: 1.6rem;
+        }
+
+        .payment-method-btn {
+            min-height: 75px;
+            padding: 0.75rem;
+        }
+
+        .payment-icon {
+            font-size: 1.3rem;
+            margin-right: 0.5rem;
+        }
+
+        .payment-label {
+            font-size: 0.85rem;
+        }
+
+        .bonus-badge {
+            font-size: 0.6rem;
+            padding: 0.2rem 0.4rem;
+        }
+
+        .bonus-notice {
+            padding: 0.75rem;
+        }
+
+        .submit-btn {
+            padding: 0.875rem;
+            font-size: 0.85rem;
+        }
+
+        .card-number {
+            font-size: 0.95rem;
+            letter-spacing: 0.25px;
+        }
+
+        .card-details {
+            font-size: 0.75rem;
+        }
+
+        .validation-icon {
+            right: 0.625rem;
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Orientation-specific styles */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .balance-page-container {
+            grid-template-columns: 1fr 1.2fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .balance-card-modern,
+        .deposit-section {
+            padding: 1.25rem;
+        }
+
+        .current-balance-box {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 1.75rem;
+        }
+
+        .tx-history {
+            margin-top: 1.5rem;
+        }
+
+        .tx-title {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tx-list {
+            gap: 0.5rem;
+        }
+
+        .tx-item {
+            padding: 0.75rem;
+        }
+    }
+
+    /* Prevent zoom on input focus for iOS */
+    @media screen and (max-width: 768px) {
+        input[type="number"],
+        input[type="text"],
+        select {
+            font-size: 16px !important;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .payment-method-btn:hover:not(.active) {
+            transform: none;
+        }
+
+        .tx-item:hover {
+            transform: none;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: none;
+        }
+
+        /* Increase tap target sizes */
+        .modern-input,
+        .modern-select,
+        .submit-btn,
+        .payment-method-btn,
+        .tx-item {
+            min-height: 44px;
+        }
+
+        .tx-item {
+            cursor: pointer;
         }
     }
 </style>
 
-<div class="balance-page-container" x-data="{ activeTab: 'crypto' }">
+<div class="balance-page-container" x-data="{
+    activePayment: 'crypto',
+    cryptoAmount: '',
+    cardAmount: '10',
+    cardHolderName: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvc: '',
+    cardHolderValid: false,
+    cardNumberValid: false,
+    expiryDateValid: false,
+    cvcValid: false,
+    amountValid: false,
+    selectedCurrency: 'USD',
+
+    // Computed property to check if all fields are valid
+    isCardFormValid() {
+        return this.cardHolderValid &&
+               this.cardNumberValid &&
+               this.expiryDateValid &&
+               this.cvcValid &&
+               this.amountValid;
+    },
+
+    // Initialize validation
+    initValidation() {
+        // Check initial values
+        this.validateCardHolder();
+        this.validateCardNumber();
+        this.validateExpiryDate();
+        this.validateCVC();
+        this.validateAmount();
+    },
+
+    // Validation methods
+    validateCardHolder() {
+        const name = this.cardHolderName.trim();
+        this.cardHolderValid = name.length >= 3 && /^[A-Za-z\s]+$/.test(name);
+        return this.cardHolderValid;
+    },
+
+    validateCardNumber() {
+        const cardNumber = this.cardNumber.replace(/\s/g, '');
+        this.cardNumberValid = cardNumber.length >= 13 && cardNumber.length <= 19 && /^\d+$/.test(cardNumber);
+        return this.cardNumberValid;
+    },
+
+    validateExpiryDate() {
+        const expiry = this.expiryDate;
+        if (expiry.length < 5) {
+            this.expiryDateValid = false;
+            return false;
+        }
+
+        const [month, year] = expiry.split('/').map(Number);
+        const now = new Date();
+        const currentYear = now.getFullYear() % 100;
+        const currentMonth = now.getMonth() + 1;
+
+        this.expiryDateValid = month >= 1 && month <= 12 &&
+                              year >= currentYear &&
+                              (year > currentYear || month >= currentMonth);
+        return this.expiryDateValid;
+    },
+
+    validateCVC() {
+        const cvc = this.cvc;
+        this.cvcValid = cvc.length >= 3 && cvc.length <= 4 && /^\d+$/.test(cvc);
+        return this.cvcValid;
+    },
+
+    validateAmount() {
+        const amount = parseFloat(this.cardAmount);
+        this.amountValid = !isNaN(amount) && amount >= 10;
+        return this.amountValid;
+    }
+}" x-init="initValidation()">
     <!-- Left Column: Balance Info -->
     <div class="balance-card-modern">
-        <h2 class="balance-title">My Wallet</h2>
-        <p class="balance-subtitle">Manage your funds securely</p>
+        <h2 class="balance-title">Wallet Balance</h2>
+        <p class="balance-subtitle">Manage your cryptocurrency funds securely</p>
 
         <div class="current-balance-box">
             <span class="balance-label">Total Balance</span>
@@ -276,25 +1205,39 @@
 
         <div class="tx-history">
             <h3 class="tx-title">
-                <i class="fas fa-history" style="color: var(--text-muted);"></i> Recent Activity
+                <i class="fas fa-history" style="color: var(--secondary);"></i> Recent Activity
             </h3>
             {% if transactions %}
                 <div class="tx-list">
                     {% for tx in transactions %}
-                    <div class="tx-item" onclick="window.location.href='{% url 'payment_pending' tx.id %}'">
-                        <div>
-                            <div class="tx-amount">{{ tx.amount }} {{ tx.crypto_type }}</div>
-                            <div class="tx-date">{{ tx.created_at|date:"M d, H:i" }}</div>
+                        {% if tx.type == 'crypto' %}
+                            <div class="tx-item"
+                                 onclick="window.location.href='{% url 'crypto_payment_pending' tx.object.id %}'">
+                        {% else %}
+                            <div class="tx-item"
+                                 onclick="window.location.href='{% url 'card_payment_pending' tx.object.id %}'">
+                        {% endif %}
+                            <div>
+                                <div class="tx-amount">
+                                    {% if tx.type == 'crypto' %}
+                                        {{ tx.object.amount }} {{ tx.object.crypto_type }}
+                                    {% else %}
+                                        ${{ tx.object.amount }} (Card)
+                                    {% endif %}
+                                </div>
+                                <div class="tx-date">{{ tx.object.created_at|date:"M d, H:i" }}</div>
+                            </div>
+                            <div class="tx-status status-{{ tx.object.status }}">
+                                {{ tx.object.status|capfirst }}
+                            </div>
                         </div>
-                        <div class="tx-status status-{{ tx.status }}">
-                            {{ tx.status|capfirst }}
-                        </div>
-                    </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                    No recent transactions
+                <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px solid var(--glass-border);">
+                    <i class="fas fa-exchange-alt" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 0.75rem; opacity: 0.5;"></i>
+                    <div style="color: var(--text-muted); font-weight: 500;">No transactions yet</div>
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Your transactions will appear here</div>
                 </div>
             {% endif %}
         </div>
@@ -302,10 +1245,22 @@
 
     <!-- Right Column: Deposit Form -->
     <div class="deposit-section">
-        <div class="tabs">
-            <button class="tab-btn active">
-                <i class="fas fa-coins"></i> Crypto Deposit
-            </button>
+        <h3 style="font-size: 1.3rem; font-weight: 800; color: white; margin-bottom: 1.25rem; letter-spacing: -0.5px;">Deposit Funds</h3>
+
+        <!-- Payment Method Selection -->
+        <div class="payment-methods">
+            <div class="payment-method-btn active" @click="activePayment = 'crypto'">
+                <i class="fas fa-coins payment-icon crypto-icon"></i>
+                <span class="payment-label">Payment with Crypto</span>
+                <div class="bonus-badge">
+                    <i class="fas fa-gift"></i> +50% BONUS
+                </div>
+            </div>
+
+            <div class="payment-method-btn" @click="activePayment = 'card'">
+                <i class="fas fa-credit-card payment-icon card-icon"></i>
+                <span class="payment-label">Payment by Card</span>
+            </div>
         </div>
 
         {% for message in messages %}
@@ -315,30 +1270,758 @@
             </div>
         {% endfor %}
 
-        <!-- Crypto Deposit Form -->
-        <div x-show="activeTab === 'crypto'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-            <form method="POST">
+        <!-- Crypto Payment Form -->
+       <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('cryptoCalculator', () => ({
+            selectedCrypto: 'BTC',
+            cryptoAmount: '',
+            // Safely parse the JSON using Django's escapejs to prevent quote-breaking
+            cryptoRates: JSON.parse('{{ crypto_rates_json|escapejs }}' || '{}'),
+
+            get equivalentCrypto() {
+                if (!this.cryptoAmount || isNaN(this.cryptoAmount) || this.cryptoAmount <= 0) return '0.00000000';
+                const rate = this.cryptoRates[this.selectedCrypto] || 1;
+                // Calculate to 8 decimal places standard for crypto
+                return (this.cryptoAmount / rate).toFixed(8);
+            },
+            get cryptoCurrencyLabel() {
+                return this.selectedCrypto;
+            }
+        }));
+    });
+</script>
+
+<div x-data="cryptoCalculator"
+     x-show="activePayment === 'crypto'"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 transform -translate-y-2"
+     x-transition:enter-end="opacity-100 transform translate-y-0"
+     class="crypto-payment-container">
+
+    <div class="bonus-notice">
+        <i class="fas fa-gift"></i>
+        <div class="bonus-notice-content">
+            <h4>Special Bonus Offer!</h4>
+            <p>Get +50% bonus on your deposit when using cryptocurrency payments.</p>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="payment_method" value="crypto">
+
+        <div class="form-group">
+            <label class="form-label" style="margin-top:10px">Select Cryptocurrency</label>
+            <select name="crypto_type"
+                    class="modern-select"
+                    x-model="selectedCrypto"
+                    required>
+                {% for cur, label in cryptocurrencies %}
+                    <option value="{{ cur }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                Deposit Amount (USD)
+                <span class="min-amount">Min. ${{ card_min_amount }}</span>
+            </label>
+            <div class="amount-container">
+                <span class="currency-prefix">$</span>
+                <input type="number"
+                       name="amount"
+                       step="0.01"
+                       min="1"
+                       x-model="cryptoAmount"
+                       class="modern-input"
+                       placeholder="10.00"
+                       required>
+            </div>
+
+            <div class="crypto-equivalent"
+                 x-show="parseFloat(cryptoAmount) > 0"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <i class="fas fa-exchange-alt"></i>
+                <span x-text="'≈ ' + equivalentCrypto + ' ' + cryptoCurrencyLabel"></span>
+                <small>(Live Rate)</small>
+            </div>
+
+            <div class="amount-hint">Minimum deposit: ${{ card_min_amount }} USD</div>
+            <div class="min-amount-info">
+                <i class="fas fa-info-circle"></i>
+                <span>Enter the amount in USD. Your equivalent crypto deposit will be calculated instantly.</span>
+            </div>
+        </div>
+
+        <button type="submit"
+                class="submit-btn"
+                :disabled="!cryptoAmount || parseFloat(cryptoAmount) < 1"
+                :class="{ 'opacity-50 cursor-not-allowed': !cryptoAmount || parseFloat(cryptoAmount) < 1 }">
+            <i class="fas fa-qrcode"></i> Generate Deposit Address
+        </button>
+    </form>
+</div>
+
+<style>
+[x-cloak] { display: none !important; }
+
+.crypto-equivalent {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.crypto-equivalent i {
+    font-size: 1rem;
+}
+
+.crypto-equivalent small {
+    opacity: 0.9;
+    font-size: 0.8rem;
+}
+
+.opacity-50 { opacity: 0.5; }
+.cursor-not-allowed { cursor: not-allowed; }
+</style>
+
+        <!-- Card Payment Form -->
+        <div x-show="activePayment === 'card'"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0">
+
+            <div class="card-preview">
+                <div class="card-brand">
+                    <i class="fab fa-cc-visa"></i>
+                </div>
+                <div class="card-chip"></div>
+                <div class="card-number" x-text="cardNumber || '**** **** **** 4242'"></div>
+                <div class="card-details">
+                    <div>
+                        <div>CARD HOLDER</div>
+                        <div class="card-holder" x-text="cardHolderName || 'YOUR NAME'"></div>
+                    </div>
+                    <div>
+                        <div>VALID THRU</div>
+                        <div class="card-expiry" x-text="expiryDate || 'MM/YY'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" id="card-form">
                 {% csrf_token %}
+                <input type="hidden" name="payment_method" value="card">
+
+                <!-- Card Holder Field -->
                 <div class="form-group">
-                    <label class="form-label">Select Cryptocurrency</label>
-                    <select name="crypto_type" class="modern-select" required>
-                        {% for cur, label in cryptocurrencies %}
-                            <option value="{{ cur }}">{{ label }}</option>
-                        {% endfor %}
+                    <label class="form-label">Card Holder Name</label>
+                    <div class="input-container">
+                        <input type="text"
+                               name="card_holder"
+                               x-model="cardHolderName"
+                               @input="validateCardHolder()"
+                               :class="cardHolderName ? (cardHolderValid ? 'modern-input valid' : 'modern-input invalid') : 'modern-input'"
+                               placeholder="John Doe"
+                               required
+                               pattern="[A-Za-z\s]{3,}"
+                               title="Please enter a valid name (letters and spaces only, minimum 3 characters)">
+                        <i class="fas fa-check validation-icon valid"
+                           x-show="cardHolderName && cardHolderValid"></i>
+                        <i class="fas fa-exclamation validation-icon invalid"
+                           x-show="cardHolderName && !cardHolderValid"></i>
+                    </div>
+                </div>
+
+                <!-- Card Number Field -->
+                <div class="form-group">
+                    <label class="form-label">Card Number</label>
+                    <div class="input-container">
+                        <input type="text"
+                               name="card_number"
+                               x-model="cardNumber"
+                               @input="validateCardNumber()"
+                               :class="cardNumber ? (cardNumberValid ? 'modern-input valid' : 'modern-input invalid') : 'modern-input'"
+                               placeholder="4242 4242 4242 4242"
+                               required
+                               pattern="[0-9\s]{13,19}"
+                               maxlength="19"
+                               inputmode="numeric">
+                        <i class="fas fa-check validation-icon valid"
+                           x-show="cardNumber && cardNumberValid"></i>
+                        <i class="fas fa-exclamation validation-icon invalid"
+                           x-show="cardNumber && !cardNumberValid"></i>
+                    </div>
+                </div>
+
+                <!-- Expiry Date and CVC Fields -->
+                <div class="card-form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Expiry Date</label>
+                        <div class="input-container">
+                            <input type="text"
+                                   name="expiry_date"
+                                   x-model="expiryDate"
+                                   @input="validateExpiryDate()"
+                                   :class="expiryDate ? (expiryDateValid ? 'modern-input valid' : 'modern-input invalid') : 'modern-input'"
+                                   placeholder="MM/YY"
+                                   required
+                                   pattern="(0[1-9]|1[0-2])\/[0-9]{2}"
+                                   inputmode="numeric">
+                            <i class="fas fa-check validation-icon valid"
+                               x-show="expiryDate && expiryDateValid"></i>
+                            <i class="fas fa-exclamation validation-icon invalid"
+                               x-show="expiryDate && !expiryDateValid"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">CVC</label>
+                        <div class="input-container">
+                            <input type="text"
+                                   name="cvc"
+                                   x-model="cvc"
+                                   @input="validateCVC()"
+                                   :class="cvc ? (cvcValid ? 'modern-input valid' : 'modern-input invalid') : 'modern-input'"
+                                   placeholder="123"
+                                   required
+                                   pattern="[0-9]{3,4}"
+                                   maxlength="3"
+                                   inputmode="numeric">
+                            <i class="fas fa-check validation-icon valid"
+                               x-show="cvc && cvcValid"></i>
+                            <i class="fas fa-exclamation validation-icon invalid"
+                               x-show="cvc && !cvcValid"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Currency Selection -->
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select name="currency" class="modern-select" x-model="selectedCurrency">
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
                     </select>
                 </div>
 
+                <!-- Amount Field -->
                 <div class="form-group">
-                    <label class="form-label">Deposit Amount</label>
-                    <input type="number" name="amount" step="0.00000001" min="0" class="modern-input" placeholder="0.00" required>
+                    <label class="form-label" style="margin-top:10px">
+                        Amount to Deposit
+                        <span class="min-amount">Min. 10</span>
+                    </label>
+                    <div class="amount-container">
+                        <span class="currency-prefix" x-text="selectedCurrency === 'USD' ? '$' : (selectedCurrency === 'EUR' ? '€' : (selectedCurrency === 'GBP' ? '£' : (selectedCurrency === 'JPY' ? '¥' : '$')))">$</span>
+                        <input type="number"
+                               name="amount"
+                               step="0.01"
+                               min="10"
+                               x-model="cardAmount"
+                               @input="validateAmount()"
+                               :class="cardAmount ? (amountValid ? 'modern-input valid' : 'modern-input invalid') : 'modern-input'"
+                               placeholder="10.00"
+                               required
+                               inputmode="decimal">
+                        <i class="fas fa-check validation-icon valid"
+                           x-show="cardAmount && amountValid"></i>
+                        <i class="fas fa-exclamation validation-icon invalid"
+                           x-show="cardAmount && !amountValid"></i>
+                    </div>
+                    <div class="amount-hint">Minimum deposit: 10.00 <span x-text="selectedCurrency">USD</span></div>
                 </div>
 
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-qrcode"></i> Generate Deposit Address
+                <button type="submit" class="submit-btn" :disabled="!isCardFormValid()" @click="submitCardForm($event)">
+                    <i class="fas fa-lock"></i> Secure Payment
                 </button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    // Card validation and formatting functions
+    class CardValidator {
+        static formatCardNumber(value) {
+            // Remove all non-digits
+            const digits = value.replace(/\D/g, '');
+            // Limit to 16 digits for standard cards
+            const limited = digits.substring(0, 16);
+            // Add space every 4 digits
+            const groups = limited.match(/.{1,4}/g);
+            return groups ? groups.join(' ') : '';
+        }
+
+        static formatCardNumberDisplay(value) {
+            // Remove all non-digits
+            const digits = value.replace(/\D/g, '');
+            // Create display with asterisks for empty positions
+            let display = '';
+            for (let i = 0; i < 16; i++) {
+                if (i < digits.length) {
+                    display += digits[i];
+                } else {
+                    display += '*';
+                }
+                // Add space every 4 characters
+                if ((i + 1) % 4 === 0 && i < 15) {
+                    display += ' ';
+                }
+            }
+            return display;
+        }
+
+        static formatExpiryDate(value) {
+            // Remove all non-digits
+            let digits = value.replace(/\D/g, '');
+
+            // Limit to 4 digits (MMYY)
+            digits = digits.substring(0, 4);
+
+            // Add slash after 2 digits
+            if (digits.length >= 3) {
+                return digits.substring(0, 2) + '/' + digits.substring(2);
+            }
+
+            return digits;
+        }
+
+        static detectCardType(number) {
+            // Remove spaces for detection
+            const cleanNumber = number.replace(/\s/g, '');
+
+            // Visa: starts with 4
+            if (/^4/.test(cleanNumber)) return 'visa';
+
+            // MasterCard: starts with 51-55 or 2221-2720
+            if (/^5[1-5]/.test(cleanNumber) || /^2[2-7]/.test(cleanNumber)) return 'mastercard';
+
+            // American Express: starts with 34 or 37
+            if (/^3[47]/.test(cleanNumber)) return 'amex';
+
+            // Discover: starts with 6011, 65, or 64[4-9]
+            if (/^6011/.test(cleanNumber) || /^65/.test(cleanNumber) || /^64[4-9]/.test(cleanNumber)) return 'discover';
+
+            // Unknown
+            return 'unknown';
+        }
+
+        static validateCardNumber(number) {
+            // Remove spaces
+            const cleanNumber = number.replace(/\s/g, '');
+
+            // Check if it's all digits and correct length
+            if (!/^\d+$/.test(cleanNumber)) return false;
+
+            // Check length based on card type
+            const cardType = this.detectCardType(cleanNumber);
+            const validLengths = {
+                'visa': [13, 16],
+                'mastercard': [16],
+                'amex': [15],
+                'discover': [16],
+                'unknown': [13, 14, 15, 16]
+            };
+
+            const lengths = validLengths[cardType] || validLengths.unknown;
+            if (!lengths.includes(cleanNumber.length)) return false;
+
+            // Luhn algorithm (mod 10) validation
+            let sum = 0;
+            let shouldDouble = false;
+
+            // Loop through digits from right to left
+            for (let i = cleanNumber.length - 1; i >= 0; i--) {
+                let digit = parseInt(cleanNumber.charAt(i));
+
+                if (shouldDouble) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+
+                sum += digit;
+                shouldDouble = !shouldDouble;
+            }
+
+            return sum % 10 === 0;
+        }
+
+        static validateExpiryDate(expiry) {
+            if (!expiry || expiry.length < 5) return false;
+
+            const [month, year] = expiry.split('/').map(Number);
+
+            // Validate month
+            if (month < 1 || month > 12) return false;
+
+            // Get current date
+            const now = new Date();
+            const currentYear = now.getFullYear() % 100; // Get last 2 digits
+            const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+
+            // Validate year
+            if (year < currentYear) return false;
+
+            // If current year, check month
+            if (year === currentYear && month < currentMonth) return false;
+
+            // Check if not too far in the future (e.g., 10 years max)
+            if (year > currentYear + 10) return false;
+
+            return true;
+        }
+
+        static validateCVC(cvc, cardType) {
+            if (!cvc || !/^\d+$/.test(cvc)) return false;
+
+            // CVC length depends on card type
+            if (cardType === 'amex') {
+                return cvc.length === 4;
+            } else {
+                return cvc.length === 3;
+            }
+        }
+
+        static validateCardHolder(name) {
+            if (!name || name.trim().length < 3) return false;
+            // Check for only letters and spaces
+            return /^[A-Za-z\s]{3,}$/.test(name.trim());
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Card number input formatting and validation
+        const cardNumberInput = document.querySelector('input[name="card_number"]');
+        const cardPreviewNumber = document.querySelector('.card-number');
+        const cardPreview = document.querySelector('.card-preview');
+        const cardBrand = document.querySelector('.card-brand i');
+        const cardHolderInput = document.querySelector('input[name="card_holder"]');
+        const cardHolderPreview = document.querySelector('.card-holder');
+        const expiryInput = document.querySelector('input[name="expiry_date"]');
+        const expiryPreview = document.querySelector('.card-expiry');
+        const cvcInput = document.querySelector('input[name="cvc"]');
+        const amountInput = document.querySelector('input[name="amount"]');
+        const submitBtn = document.querySelector('.submit-btn');
+
+        if (cardNumberInput) {
+            // Format card number as user types
+            cardNumberInput.addEventListener('input', function(e) {
+                // Store cursor position
+                const cursorPosition = e.target.selectionStart;
+                const value = e.target.value;
+
+                // Format the number
+                const formatted = CardValidator.formatCardNumber(value);
+
+                // Update input value
+                e.target.value = formatted;
+
+                // Restore cursor position (adjust for added spaces)
+                let newCursorPosition = cursorPosition;
+                const addedSpaces = (formatted.match(/\s/g) || []).length - (value.match(/\s/g) || []).length;
+                newCursorPosition += addedSpaces;
+                e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+
+                // Update preview
+                if (cardPreviewNumber) {
+                    const displayNumber = CardValidator.formatCardNumberDisplay(formatted);
+                    cardPreviewNumber.textContent = displayNumber;
+                }
+
+                // Detect card type and update preview
+                const cardType = CardValidator.detectCardType(formatted);
+                updateCardPreview(cardType);
+            });
+
+            // Handle backspace to remove digits properly
+            cardNumberInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace') {
+                    // Get cursor position
+                    const cursorPosition = this.selectionStart;
+                    const value = this.value;
+
+                    // If cursor is right after a space, move it back one more position
+                    if (cursorPosition > 0 && value[cursorPosition - 1] === ' ') {
+                        e.preventDefault();
+                        this.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
+                        // Manually remove the digit before the space
+                        const beforeCursor = value.substring(0, cursorPosition - 2);
+                        const afterCursor = value.substring(cursorPosition);
+                        this.value = beforeCursor + afterCursor;
+
+                        // Update preview and validation
+                        setTimeout(() => {
+                            const cardType = CardValidator.detectCardType(this.value);
+                            updateCardPreview(cardType);
+                        }, 0);
+                    }
+                }
+            });
+
+            // Add paste event to handle pasted card numbers
+            cardNumberInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const digits = pastedText.replace(/\D/g, '');
+                const formatted = CardValidator.formatCardNumber(digits);
+                this.value = formatted;
+
+                // Update preview
+                if (cardPreviewNumber) {
+                    const displayNumber = CardValidator.formatCardNumberDisplay(formatted);
+                    cardPreviewNumber.textContent = displayNumber;
+                }
+
+                const cardType = CardValidator.detectCardType(formatted);
+                updateCardPreview(cardType);
+            });
+
+            // Update preview on page load
+            const initialValue = cardNumberInput.value;
+            if (initialValue && cardPreviewNumber) {
+                const formatted = CardValidator.formatCardNumber(initialValue);
+                const displayNumber = CardValidator.formatCardNumberDisplay(formatted);
+                cardPreviewNumber.textContent = displayNumber;
+                const cardType = CardValidator.detectCardType(formatted);
+                updateCardPreview(cardType);
+            }
+        }
+
+        // Format expiry date
+        if (expiryInput) {
+            expiryInput.addEventListener('input', function(e) {
+                // Store cursor position BEFORE formatting
+                const cursorPosition = e.target.selectionStart;
+                const value = e.target.value;
+
+                // Get formatted value
+                const formatted = CardValidator.formatExpiryDate(value);
+
+                // Update the input value
+                e.target.value = formatted;
+
+                // Calculate new cursor position
+                let newCursorPosition = cursorPosition;
+
+                // If we just added a slash (went from 2 to 3 chars)
+                if (value.length === 2 && formatted.length === 3) {
+                    // Cursor should be after the slash
+                    newCursorPosition = 3;
+                }
+                // If we're typing after the slash
+                else if (cursorPosition >= 3 && formatted.length > value.length) {
+                    newCursorPosition = cursorPosition + 1;
+                }
+                // If we're deleting before the slash
+                else if (formatted.length < value.length && cursorPosition <= 2) {
+                    newCursorPosition = Math.max(0, cursorPosition - 1);
+                }
+
+                // Restore cursor position
+                setTimeout(() => {
+                    e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+                }, 0);
+
+                // Update preview
+                if (expiryPreview) {
+                    expiryPreview.textContent = formatted || 'MM/YY';
+                }
+            });
+
+            // Also fix the paste event handler:
+            expiryInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const digits = pastedText.replace(/\D/g, '');
+                const formatted = CardValidator.formatExpiryDate(digits);
+                this.value = formatted;
+
+                // Set cursor to end after paste
+                setTimeout(() => {
+                    this.setSelectionRange(formatted.length, formatted.length);
+                }, 0);
+
+                if (expiryPreview) {
+                    expiryPreview.textContent = formatted || 'MM/YY';
+                }
+            });
+        }
+
+        // Format CVC and update validation
+        if (cvcInput) {
+            cvcInput.addEventListener('input', function(e) {
+                // Remove non-digits and limit length
+                this.value = this.value.replace(/\D/g, '').substring(0, 4);
+            });
+        }
+
+        // Card holder name
+        if (cardHolderInput && cardHolderPreview) {
+            cardHolderInput.addEventListener('input', function(e) {
+                const name = e.target.value.toUpperCase() || 'YOUR NAME';
+                cardHolderPreview.textContent = name.substring(0, 20);
+            });
+
+            // Add paste event
+            cardHolderInput.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    const name = this.value.toUpperCase() || 'YOUR NAME';
+                    cardHolderPreview.textContent = name.substring(0, 20);
+                }, 0);
+            });
+
+            // Update preview on page load
+            if (cardHolderInput.value && cardHolderPreview) {
+                cardHolderPreview.textContent = cardHolderInput.value.toUpperCase() || 'YOUR NAME';
+            }
+        }
+
+        function updateCardPreview(cardType) {
+            if (!cardPreview) return;
+
+            // Remove all card type classes
+            cardPreview.classList.remove('visa', 'mastercard', 'amex', 'discover');
+
+            // Add appropriate class
+            if (cardType !== 'unknown') {
+                cardPreview.classList.add(cardType);
+            }
+
+            // Update card brand icon
+            if (cardBrand) {
+                let iconClass = 'fas fa-credit-card';
+                switch(cardType) {
+                    case 'visa':
+                        iconClass = 'fab fa-cc-visa';
+                        break;
+                    case 'mastercard':
+                        iconClass = 'fab fa-cc-mastercard';
+                        break;
+                    case 'amex':
+                        iconClass = 'fab fa-cc-amex';
+                        break;
+                    case 'discover':
+                        iconClass = 'fab fa-cc-discover';
+                        break;
+                }
+                cardBrand.className = iconClass;
+            }
+        }
+
+        // Validate on form submission
+        const cardForm = document.getElementById('card-form');
+        if (cardForm) {
+            cardForm.addEventListener('submit', function(e) {
+                // Get all inputs
+                const cardNumber = cardNumberInput ? cardNumberInput.value : '';
+                const expiry = expiryInput ? expiryInput.value : '';
+                const cvc = cvcInput ? cvcInput.value : '';
+                const cardHolder = cardHolderInput ? cardHolderInput.value : '';
+                const cardType = CardValidator.detectCardType(cardNumber);
+
+                // Get the amount input
+                const amountInput = this.querySelector('input[name="amount"]');
+                const minAmount = parseFloat(amountInput.getAttribute('min')) || 10;
+                const amount = parseFloat(amountInput.value);
+
+                if (amount < minAmount) {
+                    e.preventDefault();
+                    showError(`Minimum deposit amount is $${minAmount}`);
+                    return;
+                }
+
+                // Validate card details
+                if (!CardValidator.validateCardHolder(cardHolder)) {
+                    e.preventDefault();
+                    showError('Please enter a valid card holder name (letters and spaces only, minimum 3 characters)');
+                    return;
+                }
+
+                if (!CardValidator.validateCardNumber(cardNumber)) {
+                    e.preventDefault();
+                    showError('Please enter a valid card number');
+                    return;
+                }
+
+                if (!CardValidator.validateExpiryDate(expiry)) {
+                    e.preventDefault();
+                    showError('Please enter a valid expiry date');
+                    return;
+                }
+
+                if (!CardValidator.validateCVC(cvc, cardType)) {
+                    e.preventDefault();
+                    showError(cardType === 'amex' ? 'Please enter a valid 4-digit CID' : 'Please enter a valid 3-digit CVC');
+                    return;
+                }
+
+                // Show loading state
+                if (submitBtn) {
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+
+        function showError(message) {
+            // Create error alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-box';
+            alertDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+            alertDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            alertDiv.style.color = '#ef4444';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                ${message}
+            `;
+
+            // Insert after payment methods
+            const depositSection = document.querySelector('.deposit-section');
+            const paymentMethods = depositSection.querySelector('.payment-methods');
+            const existingAlerts = depositSection.querySelectorAll('.alert-box');
+
+            if (existingAlerts.length > 0) {
+                existingAlerts[0].remove();
+            }
+
+            if (paymentMethods) {
+                paymentMethods.insertAdjacentElement('afterend', alertDiv);
+
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // Initialize payment method selection
+        const paymentButtons = document.querySelectorAll('.payment-method-btn');
+        paymentButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                paymentButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    });
+</script>
 
 {% include 'includes/footer.html' %}

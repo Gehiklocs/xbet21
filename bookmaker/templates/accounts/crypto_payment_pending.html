@@ -267,7 +267,7 @@
     }
 
     function checkPayment() {
-        fetch(`/accounts/deposit/check/${txId}/`)
+        fetch(`/accounts/deposit/check/crypto/${txId}/`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === "confirmed") {
