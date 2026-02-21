@@ -26,9 +26,35 @@ RUN pip install gunicorn
 
 # Install Playwright and its dependencies
 # This is crucial for the scraper to work inside Docker
+# Install system dependencies for Chromium
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxcb1 \
+    libxkbcommon0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    librandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright Python package
 RUN pip install playwright
+
+# Install ONLY the chromium binary (skip the broken system deps command)
 RUN playwright install chromium
-RUN playwright install-deps chromium
 
 # Copy project
 COPY . /app/
