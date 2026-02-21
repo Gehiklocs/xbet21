@@ -2,10 +2,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
-from decimal import Decimal
 from django.utils import timezone
 import datetime
 import math
+from decimal import Decimal, InvalidOperation
 
 # Add this utility function at the top of the file (after imports, before classes)
 def check_bet_result(match, bet_type):
@@ -412,7 +412,9 @@ class Match(models.Model):
 
             self.save()
 
-        except (ValueError, ZeroDivisionError, TypeError) as e:
+        # 🛑 THE GLITCH SHIELD 🛑
+        # Catch the noodle! 🍝
+        except (ValueError, ZeroDivisionError, TypeError, InvalidOperation) as e:
             print(f"Error calculating odds for match {self.id}: {e}")
 
     def calculate_double_chance_odds(self, o1, ox, o2, margin_factor):

@@ -9,9 +9,9 @@ from django.db.models import Prefetch, Sum, Q
 from accounts.services.telegram_notifier import notify_site_visit
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import transaction
-from decimal import Decimal
 import json
+from decimal import Decimal, InvalidOperation
+from django.db import transaction, OperationalError
 
 API_KEY = "973fb2112f51a596e7c5f0138fecce97"  # Change this
 
@@ -206,123 +206,128 @@ def place_bet(request, match_id):
     except Exception as e:
         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
+
+def clean_decimal(value, default="0.0"):
+    """Helper to prevent decimal.InvalidOperation by stripping non-numeric chars."""
+    if value is None:
+        return Decimal(default)
+    # Strip everything except digits and the decimal point
+    sanitized = "".join(c for c in str(value) if c.isdigit() or c == '.')
+    try:
+        return Decimal(sanitized) if sanitized else Decimal(default)
+    except InvalidOperation:
+        return Decimal(default)
+
+
 @login_required
 def place_express_bet(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+    # 1. Parse and Sanitize Input
     try:
         data = json.loads(request.body)
-        # Support both 'bets' and 'selections'
-        bets = data.get('bets') or data.get('selections', [])
-        stake = Decimal(str(data.get('stake', 0)))
+        bets_data = data.get('bets') or data.get('selections', [])
+        stake = clean_decimal(data.get('stake'))
     except (json.JSONDecodeError, ValueError, TypeError):
-        return JsonResponse({'error': 'Invalid data'}, status=400)
+        return JsonResponse({'error': 'Invalid data format'}, status=400)
 
     if stake <= 0:
         return JsonResponse({'error': 'Stake must be positive'}, status=400)
+    if not bets_data:
+        return JsonResponse({'error': 'No selections provided'}, status=400)
 
-    if not bets:
-        return JsonResponse({'error': 'No bets selected'}, status=400)
+    # 2. Execution with Retry Logic for SQLite Locks
+    max_retries = 5
+    retry_delay = 0.5  # half a second
 
-    try:
-        with transaction.atomic():
-            profile = Profile.objects.select_for_update().get(user=request.user)
+    for attempt in range(max_retries):
+        try:
+            with transaction.atomic():
+                # select_for_update() locks the user row to prevent double-spending
+                profile = Profile.objects.select_for_update().get(user=request.user)
 
-            if profile.balance < stake:
-                return JsonResponse({'error': 'Insufficient balance'}, status=400)
+                if profile.balance < stake:
+                    return JsonResponse({'error': 'Insufficient balance'}, status=400)
 
-            # Deduct balance
-            profile.balance -= stake
-            profile.save()
+                total_odds = Decimal('1.0')
+                selections = []
 
-            # Check if it's a single bet
-            if len(bets) == 1:
-                bet_data = bets[0]
-                match_id = bet_data.get('match_id')
-                bet_type = bet_data.get('selection') or bet_data.get('type')
-                odds_val = Decimal(str(bet_data.get('odds')))
-                
-                match = Match.objects.get(id=match_id)
-                
-                # Validation
-                if match.status == Match.STATUS_FINISHED:
-                     raise ValueError(f"Match {match} is finished")
-                if match.status != Match.STATUS_LIVE and match.match_date < timezone.now():
-                    raise ValueError(f"Match {match} has already started")
-                
-                potential_payout = stake * odds_val
-                
-                bet = Bet.objects.create(
-                    user=request.user,
-                    match=match,
-                    bet_type=bet_type,
-                    odds=odds_val,
-                    amount=stake,
-                    potential_payout=potential_payout
-                )
-                
+                # Validate all matches before doing any work
+                for bet_item in bets_data:
+                    match_id = bet_item.get('match_id')
+                    bet_type = bet_item.get('selection') or bet_item.get('type')
+                    odds_val = clean_decimal(bet_item.get('odds'))
+
+                    match = Match.objects.get(id=match_id)
+
+                    # Validation Logic
+                    if match.status == 'finished':
+                        raise ValueError(f"Match {match.home_team} vs {match.away_team} has already finished.")
+
+                    # Check if match started (only for non-live matches)
+                    if match.status != 'live' and match.match_date < timezone.now():
+                        raise ValueError(f"Match {match.home_team} has already started.")
+
+                    total_odds *= odds_val
+                    selections.append({
+                        'match': match,
+                        'bet_type': bet_type,
+                        'odds': odds_val
+                    })
+
+                # Deduct Balance
+                profile.balance -= stake
+                profile.save()
+
+                # 3. Create Bet Records
+                if len(selections) == 1:
+                    sel = selections[0]
+                    potential_payout = stake * sel['odds']
+                    bet = Bet.objects.create(
+                        user=request.user,
+                        match=sel['match'],
+                        bet_type=sel['bet_type'],
+                        odds=sel['odds'],
+                        amount=stake,
+                        potential_payout=potential_payout
+                    )
+                else:
+                    potential_payout = stake * total_odds
+                    express_bet = ExpressBet.objects.create(
+                        user=request.user,
+                        amount=stake,
+                        total_odds=total_odds,
+                        potential_payout=potential_payout
+                    )
+                    for sel in selections:
+                        ExpressBetSelection.objects.create(
+                            express_bet=express_bet,
+                            match=sel['match'],
+                            bet_type=sel['bet_type'],
+                            odds=sel['odds']
+                        )
+
                 return JsonResponse({
                     'success': True,
-                    'message': f'Bet placed successfully! Potential payout: {potential_payout}',
-                    'new_balance': float(profile.balance),
-                    'bet_id': bet.id
+                    'message': 'Bet placed successfully!',
+                    'new_balance': float(profile.balance)
                 })
 
-            # Express Bet Logic
-            total_odds = Decimal('1.0')
-            selections = []
+        except OperationalError as e:
+            # If the DB is locked by the scraper, wait and try again
+            if "locked" in str(e).lower() and attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return JsonResponse({'error': 'Database busy. Please try again in 1 second.'}, status=503)
 
-            for bet_data in bets:
-                match_id = bet_data.get('match_id')
-                bet_type = bet_data.get('selection') or bet_data.get('type')
-                odds_val = Decimal(str(bet_data.get('odds')))
+        except Match.DoesNotExist:
+            return JsonResponse({'error': 'One or more matches no longer exist.'}, status=404)
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Internal Server Error: {str(e)}'}, status=500)
 
-                match = Match.objects.get(id=match_id)
-
-                # Basic validation: check if match is bettable
-                if match.status == Match.STATUS_FINISHED:
-                    raise ValueError(f"Match {match} is finished")
-                if match.status != Match.STATUS_LIVE and match.match_date < timezone.now():
-                    raise ValueError(f"Match {match} has already started")
-
-                total_odds *= odds_val
-                selections.append({
-                    'match': match,
-                    'bet_type': bet_type,
-                    'odds': odds_val
-                })
-
-            # Create Express Bet
-            potential_payout = stake * total_odds
-            express_bet = ExpressBet.objects.create(
-                user=request.user,
-                amount=stake,
-                total_odds=total_odds,
-                potential_payout=potential_payout
-            )
-
-            # Create Selections
-            for sel in selections:
-                ExpressBetSelection.objects.create(
-                    express_bet=express_bet,
-                    match=sel['match'],
-                    bet_type=sel['bet_type'],
-                    odds=sel['odds']
-                )
-
-            return JsonResponse({
-                'success': True,
-                'new_balance': float(profile.balance),
-                'message': 'Express bet placed successfully!'
-            })
-
-    except Match.DoesNotExist:
-        return JsonResponse({'error': 'One or more matches not found'}, status=404)
-    except ValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
 
 @login_required
 def my_bets(request):
